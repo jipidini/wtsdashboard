@@ -56,11 +56,11 @@ public static int status=0;
 				else {
 				    System.out.println("Filename: " + filePath.toString());
 				    System.out.println("Does not exist in location!");
-				    status=2;
+				   // status=2;
 				    return false;
 				}
 			} catch (Exception e) {
-				status=2;
+				//status=2;
 			    return false;
 			}
 	    }
@@ -84,8 +84,8 @@ public static int status=0;
 	            System.out.println("Directory specified does not exist!");
 	        }
 	    }
-public static void getLastModifiedDetail() throws Exception	{
-	File file = new File("C:/Jar/myBatch.txt");
+public static void getLastModifiedDetail(String name) throws Exception	{
+	File file = new File("C:/Jar/"+name+".txt");
 		System.out.println("Name: " + file.getName());
 		System.out.println("Absolute path: " + file.getAbsolutePath());
 		System.out.println("Size: " + file.length());
@@ -125,33 +125,34 @@ public static void getLastModifiedDetail() throws Exception	{
    }
 
 	
-	public static String getStartfileCreationTime() {
+	public static String getStartfileCreationTime(String name) {
 		File file = new File("C:/Jar");
-		String file_start_path=file.getAbsolutePath()+"/myBatch_start.txt";
+		String file_start_path=file.getAbsolutePath()+"/"+name+"_start.txt";
 		 return getCreationDetails(file_start_path); 
 	}
 	
-	public static String getEndfileCreationTime() {
+	public static String getEndfileCreationTime(String name) {
 		File file = new File("C:/Jar");
-		String file_start_path=file.getAbsolutePath()+"/myBatch_end.txt";
+		String file_start_path=file.getAbsolutePath()+"/"+name+"_end.txt";
 		 return getCreationDetails(file_start_path); 
 	}
 	
-	public static String getFailfileCreationTime() {
+	public static String getFailfileCreationTime(String name) {
 		File file = new File("C:/Jar");
-		String file_start_path=file.getAbsolutePath()+"/myBatch_fail.txt";
+		String file_start_path=file.getPath()+"/"+name+"_fail.txt";
+		/*String file_start_path=file.getAbsolutePath()+"/myBatch_fail.txt";*/
 		 return getCreationDetails(file_start_path); 
 	}
 	
-	public static int checkFileStatus() {
+	public static int checkFileStatus(String name) {
 		File file = new File("C:/Jar");
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	    // Declare today date with format as yyyyMMdd
 	    Calendar todayCal = Calendar.getInstance();
 	    String todayDate = dateFormat.format(todayCal.getTime());
-		Path filePath_start = Paths.get(file.getAbsolutePath()+"/myBatch_start.txt");
-		Path filePath_end = Paths.get(file.getAbsolutePath()+"/myBatch_end.txt");
-		Path filePath_fail = Paths.get(file.getAbsolutePath()+"/myBatch_fail.txt");
+		Path filePath_start = Paths.get(file.getAbsolutePath()+"/"+name+"_start.txt");
+		Path filePath_end = Paths.get(file.getAbsolutePath()+"/"+name+"_end.txt");
+		Path filePath_fail = Paths.get(file.getAbsolutePath()+"/"+name+"_fail.txt");
 		try {
 			boolean startExist=checkFileExist(filePath_start);
 			boolean endExist=checkFileExist(filePath_end);
@@ -178,7 +179,12 @@ public static void getLastModifiedDetail() throws Exception	{
 		return statusgrey; 
 	}
 	
-
+public static boolean stratFileExist(String name) throws Exception{
+	 File file = new File("C:/Jar");
+	  Path filePath_start = Paths.get(file.getAbsolutePath()+"/"+name+"_start.txt");
+	  boolean startExist= checkFileExist(filePath_start);
+    return startExist;
+}
 	
 
 	

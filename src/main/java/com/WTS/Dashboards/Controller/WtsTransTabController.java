@@ -60,13 +60,14 @@ public class WtsTransTabController {
 						 WtsTransTab newAppTrans= new WtsTransTab();
 						 newAppTrans.setProcessId(processId);
 						 newAppTrans.setApplicationId(app.getApplicationId());
+						 String appNam=app.getName();
 						WtsTransTab existingApp=trs.getTransactionByAppIdProId(app.getApplicationId(), processId,TreatmentDate.getInstance().getTreatmentDate());
 						if(existingApp!=null) {
 							System.out.println("existing app TXn..");
 								trs.updateTransactionModifiedDetail(existingApp);
 								finalList.add(existingApp);
 						}else {
-							trs.addTransaction(newAppTrans);
+							trs.addTransaction(newAppTrans,appNam);
 							finalList.add(newAppTrans);
 						}
 							
@@ -99,7 +100,7 @@ public class WtsTransTabController {
 		 Iterator<WtsTransTab> trnItr=finalList.iterator();
 		 while (trnItr.hasNext()) {
 			WtsTransTab wtsTransTab = (WtsTransTab) trnItr.next();
-			trs.addTransaction(wtsTransTab);
+			trs.addProcessTransaction(wtsTransTab);
 		}
 		 
 		 

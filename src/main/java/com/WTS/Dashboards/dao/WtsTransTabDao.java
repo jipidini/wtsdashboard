@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -51,22 +52,37 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	}
 
 
-	public void addTransaction(WtsTransTab transaction) {
+	public void addTransaction(WtsTransTab transaction,String name) {
 		try {
 			transaction.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
-			if(FileCreationTime.getStartfileCreationTime()!=null)
-			transaction.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime()));
+			if(FileCreationTime.getStartfileCreationTime(name)!=null)
+			transaction.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name)));
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		transaction.setStatusId(FileCreationTime.checkFileStatus());
+		transaction.setStatusId(FileCreationTime.checkFileStatus(name));
 		
 			entityManager.persist(transaction);
 			entityManager.flush();
 		 
 	}
 
+	public void addProcessTransaction(WtsTransTab transaction) {
+//		try {
+			transaction.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+//			if(FileCreationTime.getStartfileCreationTime(name)!=null)
+//			transaction.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name)));
+//		} catch (ParseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		transaction.setStatusId(0);
+		
+			entityManager.persist(transaction);
+			entityManager.flush();
+		 
+	}
 	
 	public void updateTransaction(WtsTransTab transaction) {
 		WtsTransTab tran = getTransactionById(transaction.getTransactionId());
@@ -214,17 +230,52 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	   Timestamp endDtTime=null;
 	   if(transa.getApplicationId()>0) {
 		  WtsAppTab appln= appDAO.getAppById(transa.getApplicationId());
+		  String name= appln.getName();
 		  startDTTime=appln.getStartTime();
 		  endDtTime=appln.getEndTime();
-		  int status=getFileStatus(startDTTime,endDtTime);
+		  int status=getFileStatus(startDTTime,endDtTime,name);
 		   transa.setStatusId(status);
 		   if(status ==1) {
-			   if(FileCreationTime.getEndfileCreationTime()!=null)
-			   transa.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime()));
+			   if(FileCreationTime.getEndfileCreationTime(name)!=null)
+			   transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
 		   }else if(status ==2) {
-			   if(FileCreationTime.getFailfileCreationTime()!=null)
-			   transa.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getFailfileCreationTime()));
+			   if(FileCreationTime.getFailfileCreationTime(name)!=null)
+			   transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getFailfileCreationTime(name)));
+		   }else if (status==4) {
+			   if(FileCreationTime.getStartfileCreationTime(name)!=null)
+				   transa.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name)));
 		   }
+	   }else if(transa.getApplicationId()==0) {
+		   Date startTxnTime=null;
+			Date EndTxnTime=null;
+			int status=0;
+			List <WtsAppTab> apps=appDAO.getAllAppsByProcess(transa.getProcessId());
+			
+			 if(apps!=null) {
+				 Iterator<WtsAppTab> appssItr=apps.iterator();
+				 int seq=0;
+				 while (appssItr.hasNext()) {
+					WtsAppTab wtsAppTab = (WtsAppTab) appssItr.next();
+					if (wtsAppTab.getSequence()==1) {
+						 startTxnTime=wtsAppTab.getStartTime();
+						 status=4;
+					}
+					if(wtsAppTab.getSequence()> seq) {
+						seq=wtsAppTab.getSequence();
+						EndTxnTime=wtsAppTab.getEndTime();
+						 String name= wtsAppTab.getName();
+						  startDTTime=wtsAppTab.getStartTime();
+						  endDtTime=wtsAppTab.getEndTime();
+						 status=getFileStatus(startDTTime,endDtTime,name);
+						  
+					}
+					
+				}
+			 }
+			 transa.setStartTransaction(startTxnTime);
+			 transa.setEndTransaction(EndTxnTime);
+			 transa.setStatusId(status);
+			 
 	   }
 	  
 	  
@@ -233,7 +284,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	
    }
    
-   private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime) {
+   private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name) {
 	   int finalstatus=0;
 	   try {
 			
@@ -267,12 +318,12 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			  
 			  if(calNow.getTimeInMillis()>calstart.getTimeInMillis() && calNow.getTimeInMillis()<calend.getTimeInMillis()) {
 				//inprogress
-				  finalstatus= FileCreationTime.checkFileStatus();
+				  finalstatus= FileCreationTime.checkFileStatus(name);
 			  }
 			  
 			  if(calNow.getTimeInMillis()>calstart.getTimeInMillis() && calNow.getTimeInMillis()>calend.getTimeInMillis()) {
 				  //fail/complete/in progress
-				  finalstatus= FileCreationTime.checkFileStatus();
+				  finalstatus= FileCreationTime.checkFileStatus(name);
 				  if(finalstatus==4) {
 					  finalstatus=3;	 
 				  }else if(finalstatus==0) {
