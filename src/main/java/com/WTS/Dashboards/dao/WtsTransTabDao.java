@@ -1,5 +1,8 @@
 package com.WTS.Dashboards.dao;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -7,6 +10,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -47,12 +51,31 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	@SuppressWarnings("unchecked")
 	
 	public List<WtsTransTab> getAlltransaction() {
-		String hql = "FROM WtsTransTab as tran ORDER BY tran.transaction_id";
+		String hql = "FROM WtsTransTab as tran ORDER BY tran.transactionId";
 		return (List<WtsTransTab>) entityManager.createQuery(hql).getResultList();
 	}
 
 
-	public void addTransaction(WtsTransTab transaction,String name) {
+	public void addTransaction(WtsTransTab transaction, String name) {
+		try {
+			transaction.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+	
+			if(FileCreationTime.getStartfileCreationTime(name)!=null)
+			transaction.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name)));
+			if(FileCreationTime.getEndfileCreationTime(name)!=null)
+				transaction.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//transaction.setStatusId(FileCreationTime.checkFileStatus());
+		
+			entityManager.persist(transaction);
+			entityManager.flush();
+		 
+	}
+	
+	/*public void addTransaction(WtsTransTab transaction) {
 		try {
 			transaction.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 			if(FileCreationTime.getStartfileCreationTime(name)!=null)
@@ -61,28 +84,13 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		transaction.setStatusId(FileCreationTime.checkFileStatus(name));
+		transaction.setStatusId(FileCreationTime.checkFileStatus());
 		
 			entityManager.persist(transaction);
 			entityManager.flush();
 		 
 	}
-
-	public void addProcessTransaction(WtsTransTab transaction) {
-//		try {
-			transaction.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
-//			if(FileCreationTime.getStartfileCreationTime(name)!=null)
-//			transaction.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name)));
-//		} catch (ParseException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		transaction.setStatusId(0);
-		
-			entityManager.persist(transaction);
-			entityManager.flush();
-		 
-	}
+*/
 	
 	public void updateTransaction(WtsTransTab transaction) {
 		WtsTransTab tran = getTransactionById(transaction.getTransactionId());
@@ -95,7 +103,6 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	
 	public void deleteTransaction(int transactionId) {
 	entityManager.remove(getTransactionById(transactionId));
-//		entityManager.remove(getTransactionByProcessId(transactionId));
 	}
 
 
@@ -111,7 +118,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	*/
 	public WtsTransTab getTdyTxnByProcessId(int processId, String trtDt)
 	{
-	String hql="from WtsTransTab WHERE processId=? and eventDate= ? AND application_id IS null and batch_id IS null";
+		String hql="from WtsTransTab WHERE processId=? and eventDate= ? AND application_id IS null and batch_id IS null";
 	
 	Query qry=entityManager.createQuery(hql);
 	qry.setParameter(1,processId);
@@ -171,58 +178,6 @@ public class WtsTransTabDao implements IWtsDaoInterface {
    return ls;
    }
    
-   
-//	public void updateTransactionModifiedDetail(WtsTransTab trans) throws Exception {
-//		// TODO Auto-generated method stub
-//		
-//		WtsTransTab transa=(WtsTransTab)trans;
-//		System.out.println("Dao----- FileCreationTimeStartTime"+FileCreationTime.LastModifiedtime);
-//		if((FileCreationTime.LastModifiedtime==null ) || (FileCreationTime.ActualStarttime==null))
-//		{
-//			transa.setStatusId(FileCreationTime.status);
-////			transa.setStartTransaction(Timestamp.valueOf(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format("00-00-00 00:00:00")));
-////			transa.setEndTransaction(Timestamp.valueOf(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format("00-00-00 00:00:00")));
-//			entityManager.flush();
-//		}
-//		else
-//		{
-//        transa.setStartTransaction(Timestamp.valueOf(FileCreationTime.ActualStarttime));
-//		System.out.println("FileCreationTime.ActualStarttime"+FileCreationTime.ActualStarttime);
-//		transa.setEndTransaction(Timestamp.valueOf(FileCreationTime.LastModifiedtime));
-//		System.out.println("FileCreationTime.LastModifiedtime"+FileCreationTime.LastModifiedtime);
-//		transa.setStatusId(FileCreationTime.status);
-//		entityManager.flush();
-//		}
-////		System.out.println("FileCreationTime.getTriggerFileStatus"+FileCreationTime.getTriggerFileStatus());
-////		System.out.println("FileCreationTime.getTriggerFileStatus()"+FileCreationTime.getTriggerFileStatus());
-//		System.out.println("EventDate------------->"+transa.getEventDate());
-//		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-//		Calendar calobj = Calendar.getInstance();
-//		System.out.println("eventdate format"+df.format(transa.getEventDate()));
-//		System.out.println("calobj.getTime()"+df.format(calobj.getTime()));
-////		System.out.println("df.format(transa.getEventDate()).equals(calobj.getTime())"+df.format(transa.getEventDate()).equals(calobj.getTime()));
-////		if(df.format(transa.getEventDate()).equals(df.format(calobj.getTime())))
-////	{
-////		System.out.println("Working bhai mere");
-////	transa.setStatusId(1);
-////	entityManager.flush();
-////	}
-//		
-//	}
-   
-   
-
-//	
-//	public void updateTransactionByProcessId(WtsTransTab transaction) throws Exception {
-//		// TODO Auto-generated method stub
-//		WtsTransTab trans=(WtsTransTab) getTransactionByProcessId(transaction.getProcessId());
-//		System.out.println("new WtsTransTabDao().updateTransactionModifiedDetail(trans);----> working");
-//		(new WtsTransTabDao()).updateTransactionModifiedDetail(trans);
-//	}
-//
-//	
-	
-
    public void updateTransactionModifiedDetail(WtsTransTab trans) throws Exception {
 	   WtsTransTab transa=(WtsTransTab)trans;
 	  
@@ -230,54 +185,55 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	   Timestamp endDtTime=null;
 	   if(transa.getApplicationId()>0) {
 		  WtsAppTab appln= appDAO.getAppById(transa.getApplicationId());
+		//  System.out.println("applicationId is....."+transa.getApplicationId());
 		  String name= appln.getName();
 		  startDTTime=appln.getStartTime();
 		  endDtTime=appln.getEndTime();
 		  int status=getFileStatus(startDTTime,endDtTime,name);
+		  System.out.println("getFileStatus function checked and status set");
 		   transa.setStatusId(status);
-		   if(status ==1) {
-			   if(FileCreationTime.getEndfileCreationTime(name)!=null)
+		   if(status==1){
+		   if(FileCreationTime.getEndfileCreationTime(name)!=null)
 			   transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
-		   }else if(status ==2) {
-			   if(FileCreationTime.getFailfileCreationTime(name)!=null)
-			   transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getFailfileCreationTime(name)));
-		   }else if (status==4) {
-			   if(FileCreationTime.getStartfileCreationTime(name)!=null)
-				   transa.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name)));
+			   System.out.println("start file set time" +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
 		   }
-	   }else if(transa.getApplicationId()==0) {
-		   Date startTxnTime=null;
-			Date EndTxnTime=null;
-			int status=0;
-			List <WtsAppTab> apps=appDAO.getAllAppsByProcess(transa.getProcessId());
-			
-			 if(apps!=null) {
-				 Iterator<WtsAppTab> appssItr=apps.iterator();
-				 int seq=0;
-				 while (appssItr.hasNext()) {
-					WtsAppTab wtsAppTab = (WtsAppTab) appssItr.next();
-					if (wtsAppTab.getSequence()==1) {
-						 startTxnTime=wtsAppTab.getStartTime();
-						 status=4;
-					}
-					if(wtsAppTab.getSequence()> seq) {
-						seq=wtsAppTab.getSequence();
-						EndTxnTime=wtsAppTab.getEndTime();
-						 String name= wtsAppTab.getName();
-						  startDTTime=wtsAppTab.getStartTime();
-						  endDtTime=wtsAppTab.getEndTime();
-						 status=getFileStatus(startDTTime,endDtTime,name);
-						  
-					}
-					
-				}
-			 }
-			 transa.setStartTransaction(startTxnTime);
-			 transa.setEndTransaction(EndTxnTime);
-			 transa.setStatusId(status);
-			 
+		   if(status==2){
+	if(FileCreationTime.getFailfileCreationTime(name)!=null)
+			transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getFailfileCreationTime(name)));
+	}	
 	   }
-	  
+		   else if(transa.getApplicationId()==0) {
+			   Date startTxnTime=null;
+				Date EndTxnTime=null;
+				int status=0;
+				List <WtsAppTab> apps=appDAO.getAllAppsByProcess(transa.getProcessId());
+				
+				 if(apps!=null) {
+					 Iterator<WtsAppTab> appssItr=apps.iterator();
+					 int seq=0;
+					 while (appssItr.hasNext()) {
+						WtsAppTab wtsAppTab = (WtsAppTab) appssItr.next();
+						if (wtsAppTab.getSequence()==1) {
+							 startTxnTime=wtsAppTab.getStartTime();
+							 status=4;
+						}
+						if(wtsAppTab.getSequence()> seq) {
+							seq=wtsAppTab.getSequence();
+							EndTxnTime=wtsAppTab.getEndTime();
+							 String name= wtsAppTab.getName();
+							  startDTTime=wtsAppTab.getStartTime();
+							  endDtTime=wtsAppTab.getEndTime();
+							 status=getFileStatus(startDTTime,endDtTime,name);
+							  
+						}
+						
+					}
+				 }
+				 transa.setStartTransaction(startTxnTime);
+				 transa.setEndTransaction(EndTxnTime);
+				 transa.setStatusId(status);
+				 
+		   }
 	  
 	   
 	   entityManager.flush();
@@ -286,58 +242,60 @@ public class WtsTransTabDao implements IWtsDaoInterface {
    
    private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name) {
 	   int finalstatus=0;
-	   try {
+	   try{
+		    System.out.println("getFileStatus Loop entered");
+		  
+			boolean startFile= FileCreationTime.stratFileExist(name);
+			boolean endFile = FileCreationTime.endFileExist(name);
+			boolean failFile= FileCreationTime.failFileExist(name);
 			
-
-			  String starttime = new SimpleDateFormat("HH:mm:ss").format(startDTTime);
-			  String endtime = new SimpleDateFormat("HH:mm:ss").format(endDtTime);
-			  String startTimeParse[] = starttime.split(":");
-			  String endTimeParse[] = endtime.split(":");
-			  int firstHour = Integer.parseInt(startTimeParse[0]);
-			  int firstMinute = Integer.parseInt(startTimeParse[1]);
-			  int firstSec = Integer.parseInt(startTimeParse[2]);
-			  int secondHour = Integer.parseInt(endTimeParse[0]);
-			  int secondMinute = Integer.parseInt(endTimeParse[1]);
-			  int secondSec = Integer.parseInt(endTimeParse[2]);
-			  
-			  Calendar calstart=Calendar.getInstance();
-			  calstart.set(Calendar.HOUR, firstHour);
-			  calstart.set(Calendar.MINUTE, firstMinute);
-			  calstart.set(Calendar.SECOND, firstSec);
-			  
-			  Calendar calend=Calendar.getInstance();
-			  calend.set(Calendar.HOUR, secondHour);
-			  calend.set(Calendar.MINUTE, secondMinute);
-			  calend.set(Calendar.SECOND, secondSec);
-			  
-			  Calendar calNow=Calendar.getInstance();
-			  if(calNow.getTimeInMillis()<calstart.getTimeInMillis()) {
-				  //yet to start
-				  finalstatus= 0;
+			Timestamp current= currentTimestamp();
+		 if( (!startFile) && (!endFile) && (!failFile)){
+				   finalstatus=0;
+				   System.out.println("not started");
 			  }
+		 
+		 else if((!startFile) && (!endFile) && (failFile)){	
+		 		
+				finalstatus=2;
+}
 			  
-			  if(calNow.getTimeInMillis()>calstart.getTimeInMillis() && calNow.getTimeInMillis()<calend.getTimeInMillis()) {
-				//inprogress
-				  finalstatus= FileCreationTime.checkFileStatus(name);
-			  }
-			  
-			  if(calNow.getTimeInMillis()>calstart.getTimeInMillis() && calNow.getTimeInMillis()>calend.getTimeInMillis()) {
-				  //fail/complete/in progress
-				  finalstatus= FileCreationTime.checkFileStatus(name);
-				  if(finalstatus==4) {
-					  finalstatus=3;	 
-				  }else if(finalstatus==0) {
-					  finalstatus=2;	 
+		 else if((startFile) && (!endFile) && (failFile)){	
+				 		
+								finalstatus=2;
+		 }
+		 
+		else  if((startFile) && (!endFile) && (current.after(endDtTime)) ) {
+				 		 
+				 		 				finalstatus=3;
+				 		 				System.out.println("application completion delayed");
+	   }
+		 else if((startFile) && (!endFile) && current.before(endDtTime)){
+				 		finalstatus=4;
+				 		System.out.println("app still running");
 				  }
-			  }
+					 
+				  
+				  System.out.println("current time is "+current);
+				  System.out.println("expectde start time is---- "+startDTTime);
+				  System.out.println("start file present and conditions checked");
+	
 			  
-	    } catch (Exception e){
+			  
+		  if((startFile) && (endFile)){
+					  System.out.println("application completed successfully!!!!");
+					  finalstatus=1;
+			  }	
+		 
+	    } 
+	   catch (Exception e){
 	        e.printStackTrace();
 	    }
-	   
+	   System.out.println("loop exit with status as "+finalstatus);
 	   return finalstatus;
-   }
+  }
 
+   
 public List<WtsAppTab> getAppById(int applicationId) {
 	String hql="FROM WtsAppTab as trans inner join WtsTransTab  as tr where tr.application=?  ";
 	return(List<WtsAppTab>) entityManager.createQuery(hql).setParameter(1,applicationId).getResultList();
@@ -345,10 +303,25 @@ public List<WtsAppTab> getAppById(int applicationId) {
 
 
 public List<WtsTransTab> getFlowData(int applicationId) {
-	// TODO Auto-generated method stub
 	return null;
 }
 
+	public Timestamp startTimestamp(String name){
+		String startActTime = FileCreationTime.getStartfileCreationTime(name);
+		Timestamp start= Timestamp.valueOf(startActTime);
+		return start;
+	}
 	
+	public Timestamp endTimestamp(String name){
+		String endActTime= FileCreationTime.getEndfileCreationTime(name);
+		Timestamp end= Timestamp.valueOf(endActTime);
+		return end;
+	}
 	
+	public Timestamp currentTimestamp(){
+		Date today= new Date();
+		Timestamp current = new Timestamp(today.getTime());
+		return current;
+		
+	}
 }

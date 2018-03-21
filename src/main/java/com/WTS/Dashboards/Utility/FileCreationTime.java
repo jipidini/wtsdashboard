@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import ch.qos.logback.classic.net.SyslogAppender;
 
 public class FileCreationTime {
-	static File filePath2=new File("C:/Jar/myBatch_end.txt");
+	static File filePath2=new File("C:/Test/myBatch_end.txt");
 public static int status=0;
 	public FileCreationTime() {
 		// TODO Auto-generated constructor stub
@@ -85,7 +85,7 @@ public static int status=0;
 	        }
 	    }
 public static void getLastModifiedDetail(String name) throws Exception	{
-	File file = new File("C:/Jar/"+name+".txt");
+	File file = new File("C:/Test/"+name+".txt");
 		System.out.println("Name: " + file.getName());
 		System.out.println("Absolute path: " + file.getAbsolutePath());
 		System.out.println("Size: " + file.length());
@@ -126,26 +126,28 @@ public static void getLastModifiedDetail(String name) throws Exception	{
 
 	
 	public static String getStartfileCreationTime(String name) {
-		File file = new File("C:/Jar");
+		File file = new File("C:/Test");
 		String file_start_path=file.getAbsolutePath()+"/"+name+"_start.txt";
+		System.out.println("File name "+name);
 		 return getCreationDetails(file_start_path); 
 	}
 	
 	public static String getEndfileCreationTime(String name) {
-		File file = new File("C:/Jar");
+		File file = new File("C:/Test");
 		String file_start_path=file.getAbsolutePath()+"/"+name+"_end.txt";
+		System.out.println("end file name"+file_start_path);
 		 return getCreationDetails(file_start_path); 
 	}
 	
 	public static String getFailfileCreationTime(String name) {
-		File file = new File("C:/Jar");
+		File file = new File("C:/Test");
 		String file_start_path=file.getPath()+"/"+name+"_fail.txt";
 		/*String file_start_path=file.getAbsolutePath()+"/myBatch_fail.txt";*/
 		 return getCreationDetails(file_start_path); 
 	}
 	
 	public static int checkFileStatus(String name) {
-		File file = new File("C:/Jar");
+		File file = new File("C:/Test");
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	    // Declare today date with format as yyyyMMdd
 	    Calendar todayCal = Calendar.getInstance();
@@ -179,12 +181,26 @@ public static void getLastModifiedDetail(String name) throws Exception	{
 		return statusgrey; 
 	}
 	
-public static boolean stratFileExist(String name) throws Exception{
-	 File file = new File("C:/Jar");
-	  Path filePath_start = Paths.get(file.getAbsolutePath()+"/"+name+"_start.txt");
-	  boolean startExist= checkFileExist(filePath_start);
-    return startExist;
-}
+	public static boolean stratFileExist(String name) throws Exception{
+		 File file = new File("C:/Test");
+		  Path filePath_start = Paths.get(file.getAbsolutePath()+"/"+name+"_start.txt");
+		  boolean startExist= checkFileExist(filePath_start);
+	    return startExist;
+	}
+		
+	public static boolean endFileExist(String name) throws Exception{
+		 File file = new File("C:/Test");
+		  Path filePath_end = Paths.get(file.getAbsolutePath()+"/"+name+"_end.txt");
+		  boolean endExist=checkFileExist(filePath_end);
+	   return endExist;
+	}
+
+	public static boolean failFileExist(String name) throws Exception{
+		 File file = new File("C:/Test");
+		  Path filePath_fail = Paths.get(file.getAbsolutePath()+"/"+name+"_fail.txt");
+		  boolean endExist=checkFileExist(filePath_fail);
+	  return endExist;
+	}
 	
 
 	

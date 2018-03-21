@@ -25,18 +25,17 @@ public class WtsTransTabService implements IWtsServiceInterface {
 	}
 
 	
-	public synchronized boolean addTransaction(WtsTransTab trans,String name) {
-			
-				tranDao.addTransaction(trans,name);
+	public synchronized boolean addTransaction(WtsTransTab trans, String name) {
+				tranDao.addTransaction(trans , name);
 				return true;
 		}
 	
-	public synchronized boolean addProcessTransaction(WtsTransTab trans) {
-		
-		tranDao.addProcessTransaction(trans);
+	/*public synchronized boolean addTransaction(WtsTransTab trans) {
+	    
+		tranDao.addTransaction(trans);
 		return true;
 }
-	
+	*/
 	public void updateTransaction(WtsTransTab trans) {
 		System.out.println("Mein hu problem");
 		tranDao.updateTransaction(trans);
@@ -58,7 +57,6 @@ public class WtsTransTabService implements IWtsServiceInterface {
 
 	
 	public void updateTransactionModifiedDetail(WtsTransTab trans) throws Exception {
-		// TODO Auto-generated method stub
 		System.out.println("updateTransactionModifiedDetail(WtsTransTab trans)---- mene kiya h");
 		tranDao.updateTransactionModifiedDetail(trans);
 	}
