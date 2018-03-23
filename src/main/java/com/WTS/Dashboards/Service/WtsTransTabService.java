@@ -36,6 +36,11 @@ public class WtsTransTabService implements IWtsServiceInterface {
 		return true;
 }
 	*/
+public synchronized boolean addProcessTransaction(WtsTransTab trans) {
+		
+		tranDao.addProcessTransaction(trans);
+		return true;
+}
 	public void updateTransaction(WtsTransTab trans) {
 		System.out.println("Mein hu problem");
 		tranDao.updateTransaction(trans);

@@ -187,6 +187,17 @@ public class WtsTransTabDao implements IWtsDaoInterface {
    return ls;
    }
    
+   public void addProcessTransaction(WtsTransTab transaction) {
+
+			transaction.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+			
+			transaction.setStatusId(0);
+		
+			entityManager.persist(transaction);
+			entityManager.flush();
+		 
+	}
+   
    public void updateTransactionModifiedDetail(WtsTransTab trans) throws Exception {
 	   WtsTransTab transa=(WtsTransTab)trans;
 		  
