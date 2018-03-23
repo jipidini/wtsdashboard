@@ -213,7 +213,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		  int status=getFileStatus(startDTTime,endDtTime,name);
 		  WtsTransTab existtrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),appln.getApplicationId());
 			 if(existtrans!=null && existtrans.getStatusId()== 2 && status !=2) {
-				 //UPDATE ETA HERE FOR ALL APPS AND PROCESS
+				 //UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
+				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true);
 			 }
 		  
 		  
@@ -297,7 +298,13 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	
    }
    
-   private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name) {
+   private void updateNewETA(int processId, int applicationId, boolean isProblem) {
+	// MOVE THIS to the ETA SERVICE
+	   
+	
+   }
+
+private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name) {
 	   int finalstatus=0;
 	   try{
 		    System.out.println("getFileStatus Loop entered");
