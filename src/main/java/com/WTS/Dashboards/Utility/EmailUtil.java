@@ -17,8 +17,8 @@ public class EmailUtil {
 	public void sendSimpleMessage(
 		      String to, String subject, String text) {
 		
-		final String username = "behera.deb@gmail.com";
-		final String password = "Deb@0004";
+		final String username = "----@gmail.com";
+		final String password = "---";
 
 		Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");
@@ -36,7 +36,7 @@ public class EmailUtil {
 		try {
 
 			Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress("behera.deb@gmail.com"));
+			message.setFrom(new InternetAddress("----@gmail.com"));
 			message.setRecipients(Message.RecipientType.TO,
 				InternetAddress.parse(to));
 			message.setSubject(subject);
