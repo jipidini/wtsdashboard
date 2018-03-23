@@ -247,6 +247,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	   } else if(transa.getApplicationId()==0) {
 			   Date startTxnTime=null;
 				Date EndTxnTime=null;
+				int startAppID=0;
+				int endAppID=0;
 				int status=0;
 				List <WtsAppTab> apps=appDAO.getAllAppsByProcess(transa.getProcessId());
 				
@@ -256,23 +258,29 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 					 while (appssItr.hasNext()) {
 						WtsAppTab wtsAppTab = (WtsAppTab) appssItr.next();
 						if (wtsAppTab.getSequence()==1) {
-							 startTxnTime=wtsAppTab.getStartTime();
+							startAppID=wtsAppTab.getApplicationId();
 							 status=4;
+							 WtsTransTab appTxn= this.getTransactionByAppIdProId(startAppID, transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate());
+							 if(appTxn!=null)
+							 transa.setStartTransaction(appTxn.getStartTransaction());
 						}
 						if(wtsAppTab.getSequence()> seq) {
 							seq=wtsAppTab.getSequence();
-							EndTxnTime=wtsAppTab.getEndTime();
+							endAppID=wtsAppTab.getApplicationId();
 							 String name= wtsAppTab.getName();
 							  startDTTime=wtsAppTab.getStartTime();
 							  endDtTime=wtsAppTab.getEndTime();
 							 status=getFileStatus(startDTTime,endDtTime,name);
-							  
+							 WtsTransTab appTxn= this.getTransactionByAppIdProId(endAppID, transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate());
+							 if(appTxn!=null)
+							 transa.setEndTransaction(appTxn.getEndTransaction());
 						}
 						
 					}
 				 }
-				 transa.setStartTransaction(startTxnTime);
-				 transa.setEndTransaction(EndTxnTime);
+				 
+				
+				 
 				 transa.setStatusId(status);
 				 
 		   }

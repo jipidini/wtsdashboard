@@ -141,6 +141,7 @@ public synchronized boolean addProcessTransaction(WtsTransTab trans) {
 		return tr;
 	}
 	
+	
 	public WtsTransTab getTransactionByAppIdProId(int appId,int proId, String treatDt) {
 		WtsTransTab tr= tranDao.getTransactionByAppIdProId(appId,proId,treatDt);
 		return tr;
