@@ -1,16 +1,11 @@
 package com.WTS.Dashboards.dao;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -22,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
+import com.WTS.Dashboards.Utility.EmailUtil;
 import com.WTS.Dashboards.Utility.FileCreationTime;
 import com.WTS.Dashboards.Utility.TreatmentDate;
 
@@ -158,7 +154,20 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		return null;
 					
 	}
+	public WtsTransTab getTdyTxnByProcessIdAppId(int processId, String trtDt,int appId)
+	{
+		String hql="from WtsTransTab WHERE processId=? and eventDate= ? AND application_id= ? and batch_id IS null";
 	
+	Query qry=entityManager.createQuery(hql);
+	qry.setParameter(1,processId);
+	qry.setParameter(2,trtDt);
+	qry.setParameter(3,appId);
+	if(qry.getResultList()!=null && !qry.getResultList().isEmpty())
+		return (WtsTransTab)qry.getResultList().get(0);
+	else
+	return null;
+				
+	}
 	public boolean transactionExistsbyProcessId(int process)
 	{
     	System.out.println("boolean transactionExistsbyProcessId(int Id)");
@@ -180,29 +189,51 @@ public class WtsTransTabDao implements IWtsDaoInterface {
    
    public void updateTransactionModifiedDetail(WtsTransTab trans) throws Exception {
 	   WtsTransTab transa=(WtsTransTab)trans;
-	  
+		  
 	   Timestamp startDTTime=null;
 	   Timestamp endDtTime=null;
+	   //APPLICATION
 	   if(transa.getApplicationId()>0) {
 		  WtsAppTab appln= appDAO.getAppById(transa.getApplicationId());
-		//  System.out.println("applicationId is....."+transa.getApplicationId());
 		  String name= appln.getName();
 		  startDTTime=appln.getStartTime();
 		  endDtTime=appln.getEndTime();
+		  int curSeq=appln.getSequence();
 		  int status=getFileStatus(startDTTime,endDtTime,name);
 		  System.out.println("getFileStatus function checked and status set");
+		  
 		   transa.setStatusId(status);
+		   if(FileCreationTime.getStartfileCreationTime(name)!=null)
+			   transa.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name)));
 		   if(status==1){
-		   if(FileCreationTime.getEndfileCreationTime(name)!=null)
-			   transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
-			   System.out.println("start file set time" +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
-		   }
+			   if(FileCreationTime.getEndfileCreationTime(name)!=null)
+				   transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
+				   System.out.println("start file set time" +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
+			}
 		   if(status==2){
-	if(FileCreationTime.getFailfileCreationTime(name)!=null)
-			transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getFailfileCreationTime(name)));
-	}	
-	   }
-		   else if(transa.getApplicationId()==0) {
+			   	if(FileCreationTime.getFailfileCreationTime(name)!=null)
+			   		transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getFailfileCreationTime(name)));
+		   }
+		   boolean isprevRed=false;
+		   List <WtsAppTab> apps=appDAO.getAllAppsByProcess(transa.getProcessId());
+		   if(apps!=null) {
+				 Iterator<WtsAppTab> appssItr=apps.iterator();
+				 while (appssItr.hasNext()) {
+					 WtsAppTab app = (WtsAppTab) appssItr.next();
+					 if(app.getSequence()<curSeq) {
+						 WtsTransTab apptrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),app.getApplicationId());
+						 if(apptrans!=null && apptrans.getStatusId()== 2) {
+							 transa.setStatusId(2);
+							 //should be replaced with real reporting configured emails for the app in place of hardcoded values
+							 new EmailUtil().sendSimpleMessage("behera.deb@gmail.com", "Application-"+app.getName()+"-STATUS RED!", "Process: "+processDAO.getProcessById(transa.getProcessId()).getName()
+									 + " Application:- "+app.getName()+" STATUS RED!!");
+						 }
+					 }
+				 }
+		   }
+		   
+		   //PROCESS
+	   } else if(transa.getApplicationId()==0) {
 			   Date startTxnTime=null;
 				Date EndTxnTime=null;
 				int status=0;
