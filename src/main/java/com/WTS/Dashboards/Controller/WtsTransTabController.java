@@ -48,69 +48,7 @@ public class WtsTransTabController {
 	@GetMapping("procup/date/{processId}")
 	public  ResponseEntity<List <WtsTransTab>> getTransactionByProcessId(@PathVariable("processId") int processId) throws Exception
 	{
-		List <WtsTransTab> finalList=new ArrayList<WtsTransTab>();;
-		WtsTransTab todayProTxn=trs.getTdyTxnByProcessId(processId,TreatmentDate.getInstance().getTreatmentDate());
-	 if(todayProTxn!=null) {
-
-			finalList.add(todayProTxn);
-			trs.updateTransactionModifiedDetail(todayProTxn);
-			
-			List <WtsAppTab> apps=appDAO.getAllAppsByProcess(processId);
-			 if(apps!=null) {
-				 Iterator<WtsAppTab> appssItr=apps.iterator();
-				 while (appssItr.hasNext()) {
-					 WtsAppTab app = (WtsAppTab) appssItr.next();
-					 if(app!=null && DateUtility.isAfterNow(app.getStartTime())) {
-						 WtsTransTab newAppTrans= new WtsTransTab();
-						 newAppTrans.setProcessId(processId);
-						 newAppTrans.setApplicationId(app.getApplicationId());
-						 String appNam=app.getName();
-						WtsTransTab existingApp=trs.getTransactionByAppIdProId(app.getApplicationId(), processId,TreatmentDate.getInstance().getTreatmentDate());
-						if(existingApp!=null) {
-							System.out.println("existing app TXn..");
-								trs.updateTransactionModifiedDetail(existingApp);
-								finalList.add(existingApp);
-						}else {
-							trs.addTransaction(newAppTrans,appNam);
-							finalList.add(newAppTrans);
-						}
-							
-
-					 }
-					
-				} 
-			 }
-		
-	 }else {
-		
-		 WtsTransTab newTrans= new WtsTransTab();
-		 newTrans.setProcessId(processId);
-		 finalList.add(newTrans);
-		 List <WtsAppTab> apps=appDAO.getAllAppsByProcess(processId);
-		 if(apps!=null) {
-			 Iterator<WtsAppTab> appssItr=apps.iterator();
-			 while (appssItr.hasNext()) {
-				 WtsAppTab app = (WtsAppTab) appssItr.next();
-				 if(app!=null && DateUtility.isAfterNow(app.getStartTime())) {
-					 WtsTransTab newAppTrans= new WtsTransTab();
-					 newAppTrans.setProcessId(processId);
-					 newAppTrans.setApplicationId(app.getApplicationId());
-					 finalList.add(newAppTrans);
-				 }
-				
-			} 
-		 }
-		 
-		 Iterator<WtsTransTab> trnItr=finalList.iterator();
-		 while (trnItr.hasNext()) {
-			WtsTransTab wtsTransTab = (WtsTransTab) trnItr.next();
-			trs.addProcessTransaction(wtsTransTab);
-		}
-		 
-		 
-		 
-	 }
-	 
+		List <WtsTransTab> finalList=trs.fetchAllTxns(processId);
 	 
 	 return new ResponseEntity<List <WtsTransTab>>(finalList,HttpStatus.OK);
 		
