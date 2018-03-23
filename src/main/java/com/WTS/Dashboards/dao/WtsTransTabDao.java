@@ -211,6 +211,13 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		  endDtTime=appln.getEndTime();
 		  int curSeq=appln.getSequence();
 		  int status=getFileStatus(startDTTime,endDtTime,name);
+		  WtsTransTab existtrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),appln.getApplicationId());
+			 if(existtrans!=null && existtrans.getStatusId()== 2 && status !=2) {
+				 //UPDATE ETA HERE FOR ALL APPS AND PROCESS
+			 }
+		  
+		  
+		  
 		  System.out.println("getFileStatus function checked and status set");
 		  
 		   transa.setStatusId(status);
