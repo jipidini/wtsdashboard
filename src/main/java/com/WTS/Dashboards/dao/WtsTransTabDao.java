@@ -15,8 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.WTS.Dashboards.Controller.WtsTransTabController;
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
+import com.WTS.Dashboards.Utility.DateUtility;
 import com.WTS.Dashboards.Utility.EmailUtil;
 import com.WTS.Dashboards.Utility.FileCreationTime;
 import com.WTS.Dashboards.Utility.TreatmentDate;
@@ -34,6 +36,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	
 	@Autowired
 	private WtsAppTabDao appDAO;
+	
+	
 	
 	public WtsTransTab getTransactionById(int transactionId) {
 		return entityManager.find(WtsTransTab.class,transactionId);
@@ -212,9 +216,16 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		  int curSeq=appln.getSequence();
 		  int status=getFileStatus(startDTTime,endDtTime,name);
 		  WtsTransTab existtrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),appln.getApplicationId());
-			 if(existtrans!=null && existtrans.getStatusId()== 2 && status !=2) {
+			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && status ==WtsTransTabController.STATUS_IN_PROGRESS) {
+				 Date oldStartDTTime=existtrans.getStartTransaction();
+				   Date oldEndDtTime=existtrans.getEndTransaction();
+				   Date newStartDTTime=null;
+					Date newEndDTTime=null;
+				   if(FileCreationTime.getStartfileCreationTime(name)!=null)
+					   newStartDTTime=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name));
+				   newEndDTTime=DateUtility.getNewEndETA(oldStartDTTime,newStartDTTime,oldEndDtTime);
 				 //UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
-				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true);
+				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true,newStartDTTime,newEndDTTime);
 			 }
 		  
 		  
@@ -224,12 +235,12 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		   transa.setStatusId(status);
 		   if(FileCreationTime.getStartfileCreationTime(name)!=null)
 			   transa.setStartTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name)));
-		   if(status==1){
+		   if(status==WtsTransTabController.STATUS_SUCCESS){
 			   if(FileCreationTime.getEndfileCreationTime(name)!=null)
 				   transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
 				   System.out.println("start file set time" +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
 			}
-		   if(status==2){
+		   if(status==WtsTransTabController.STATUS_FAILURE){
 			   	if(FileCreationTime.getFailfileCreationTime(name)!=null)
 			   		transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getFailfileCreationTime(name)));
 		   }
@@ -241,8 +252,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 					 WtsAppTab app = (WtsAppTab) appssItr.next();
 					 if(app.getSequence()<curSeq) {
 						 WtsTransTab apptrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),app.getApplicationId());
-						 if(apptrans!=null && apptrans.getStatusId()== 2) {
-							 transa.setStatusId(2);
+						 if(apptrans!=null && apptrans.getStatusId()== WtsTransTabController.STATUS_FAILURE) {
+							 transa.setStatusId(WtsTransTabController.STATUS_FAILURE);
 							 //should be replaced with real reporting configured emails for the app in place of hardcoded values
 							 new EmailUtil().sendSimpleMessage("behera.deb@gmail.com", "Application-"+app.getName()+"-STATUS RED!", "Process: "+processDAO.getProcessById(transa.getProcessId()).getName()
 									 + " Application:- "+app.getName()+" STATUS RED!!");
@@ -267,7 +278,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 						WtsAppTab wtsAppTab = (WtsAppTab) appssItr.next();
 						if (wtsAppTab.getSequence()==1) {
 							startAppID=wtsAppTab.getApplicationId();
-							 status=4;
+							 status=WtsTransTabController.STATUS_IN_PROGRESS;
 							 WtsTransTab appTxn= this.getTransactionByAppIdProId(startAppID, transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate());
 							 if(appTxn!=null)
 							 transa.setStartTransaction(appTxn.getStartTransaction());
@@ -298,7 +309,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	
    }
    
-   private void updateNewETA(int processId, int applicationId, boolean isProblem) {
+   private void updateNewETA(int processId, int applicationId, boolean isProblem, Date newStartDTTime, Date newEndDTTime) {
 	// MOVE THIS to the ETA SERVICE
 	   
 	

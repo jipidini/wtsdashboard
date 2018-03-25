@@ -3,6 +3,7 @@ package com.WTS.Dashboards.Utility;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 public class DateUtility {
 
@@ -28,5 +29,11 @@ public class DateUtility {
 			  return true;
 		  }
 		 
+	}
+	
+	public static Date getNewEndETA(Date oldStartDTTime, Date newStartDTTime, Date oldEndDtTime) {
+		Date newEndETA=null;
+		//Get diff and sum or with oldEndtime and return that as newEndETA
+		return newEndETA;
 	}
 }

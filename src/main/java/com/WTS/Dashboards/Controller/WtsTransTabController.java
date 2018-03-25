@@ -35,6 +35,12 @@ public class WtsTransTabController {
 	@Autowired
 	private WtsAppTabDao appDAO;
 	
+	public static final int STATUS_IN_PROGRESS=4;
+	public static final int STATUS_SUCCESS=1;
+	public static final int STATUS_YET_TO_START=0;
+	public static final int STATUS_FAILURE=2;
+	public static final int STATUS_DELAYED=3;
+	
 	/*@Autowired
 	private WtsTreatTabService trt;*/
 	
