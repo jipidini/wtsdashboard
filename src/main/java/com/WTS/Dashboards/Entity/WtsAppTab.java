@@ -48,6 +48,10 @@ public class WtsAppTab implements Serializable {
 	private Timestamp lastUpdateTime;
 	@Column(name="enable_flag")
 	private int enableFlag;
+	@Column(name="buffer_minute_time")
+	private int bufferTime;
+	@Column(name="email_id")
+	private String emailId;
 	
 	@Column(name="start_time")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -63,6 +67,9 @@ public class WtsAppTab implements Serializable {
 	@OneToMany(fetch = FetchType.EAGER, mappedBy = "batchId")
 	@JsonProperty("Batches")
     private Set<WtsBatchTab> bat = new HashSet<WtsBatchTab>();
+	@OneToMany(fetch = FetchType.EAGER, mappedBy = "applicationId")
+	@JsonProperty("Transactions")
+    private Set<WtsTransTab> tran = new HashSet<WtsTransTab>();
 	
 	public int getApplicationId() {
 		return applicationId;
@@ -117,6 +124,12 @@ public class WtsAppTab implements Serializable {
 	}
 	public void setEnableFlag(int enableFlag) {
 		this.enableFlag = enableFlag;
+	}
+	public int getBufferTime() {
+		return bufferTime;
+	}
+	public void setBufferTime(int bufferTime) {
+		this.bufferTime = bufferTime;
 	}
 	public WtsTransTab getTransactionId() {
 		return transactionId;

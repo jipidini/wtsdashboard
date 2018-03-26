@@ -49,6 +49,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 	    @JoinColumn(name = "process_id", nullable = false,insertable=false,updatable=false) 
 		@JsonProperty("Applications")
 		private Set<WtsAppTab> line = new HashSet<WtsAppTab>();
+	
 		
 		
 		public int getProcessId() {
