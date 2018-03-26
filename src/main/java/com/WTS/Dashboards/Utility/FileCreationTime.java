@@ -202,7 +202,24 @@ public static void getLastModifiedDetail(String name) throws Exception	{
 	  return endExist;
 	}
 	
-
+	public static Timestamp startTimestamp(String name){
+		String startActTime = FileCreationTime.getStartfileCreationTime(name);
+		Timestamp start= Timestamp.valueOf(startActTime);
+		return start;
+	}
+	
+	public static Timestamp endTimestamp(String name){
+		String endActTime= FileCreationTime.getEndfileCreationTime(name);
+		Timestamp end= Timestamp.valueOf(endActTime);
+		return end;
+	}
+	
+	public static Timestamp currentTimestamp(){
+		Date today= new Date();
+		Timestamp current = new Timestamp(today.getTime());
+		return current;
+		
+	}
 	
 }
 	

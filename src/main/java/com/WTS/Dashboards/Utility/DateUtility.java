@@ -5,8 +5,13 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-public class DateUtility {
+import org.springframework.beans.factory.annotation.Autowired;
 
+import com.WTS.Dashboards.dao.WtsNewEtaTabDao;
+
+public class DateUtility {
+	@Autowired
+	private static WtsNewEtaTabDao etD;
 	
 	public static boolean isAfterNow(Timestamp startDTTime) {
 		String starttime = new SimpleDateFormat("HH:mm:ss").format(startDTTime);
@@ -29,6 +34,11 @@ public class DateUtility {
 			  return true;
 		  }
 		 
+	}
+	
+	public static Date getNewStartETA(Date oldStartDTTime, Date newStartDTTime, Date oldEndDtTime) {
+		Date newStartETA=null;
+		return newStartETA;
 	}
 	
 	public static Date getNewEndETA(Date oldStartDTTime, Date newStartDTTime, Date oldEndDtTime) {

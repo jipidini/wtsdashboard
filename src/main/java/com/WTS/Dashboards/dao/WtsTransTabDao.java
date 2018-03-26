@@ -37,6 +37,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	@Autowired
 	private WtsAppTabDao appDAO;
 	
+	@Autowired
+	private WtsNewEtaTabDao etDAO;
 	
 	
 	public WtsTransTab getTransactionById(int transactionId) {
@@ -216,7 +218,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		  int curSeq=appln.getSequence();
 		  int status=getFileStatus(startDTTime,endDtTime,name);
 		  WtsTransTab existtrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),appln.getApplicationId());
-			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && status ==WtsTransTabController.STATUS_IN_PROGRESS) {
+			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && status ==WtsTransTabController.STATUS_IN_PROGRESS || status ==WtsTransTabController.STATUS_DELAYED) {
 				 Date oldStartDTTime=existtrans.getStartTransaction();
 				   Date oldEndDtTime=existtrans.getEndTransaction();
 				   Date newStartDTTime=null;
@@ -225,7 +227,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 					   newStartDTTime=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name));
 				   newEndDTTime=DateUtility.getNewEndETA(oldStartDTTime,newStartDTTime,oldEndDtTime);
 				 //UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
-				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true,newStartDTTime,newEndDTTime);
+				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true,newEndDTTime);
 			 }
 		  
 		  
@@ -310,10 +312,27 @@ public class WtsTransTabDao implements IWtsDaoInterface {
    }
    
    private void updateNewETA(int processId, int applicationId, boolean isProblem, Date newStartDTTime, Date newEndDTTime) {
+	   System.out.println("update new ETA entered");
 	// MOVE THIS to the ETA SERVICE
-	   
+	   String hql= "From WtsAppTab as apn where apn.applicationId=?";
+		WtsAppTab app= (WtsAppTab) entityManager.createQuery(hql).setParameter(1,applicationId).getSingleResult();
+	  /* WtsAppTab app = new WtsAppTab();
+	   app.setApplicationId(applicationId);
+	   app.setProcessId(processId);*/
+	    etDAO.newEtaStartCalculation(app,newStartDTTime,applicationId,processId);
+	 /*  newEndDTTime=etDAO.newEtaEndCalculation(app);*/
 	
    }
+   
+   private void updateNewETA(int processId, int applicationId, boolean isProblem, Date newEndDTTime) {
+	   System.out.println("update new ETA entered");
+		// MOVE THIS to the ETA SERVICE
+	   String hql= "From WtsAppTab as apn where apn.applicationId=?";
+		WtsAppTab app= (WtsAppTab) entityManager.createQuery(hql).setParameter(1,applicationId).getSingleResult();
+		    etDAO.newEtaStartCalculation(app,newEndDTTime,applicationId,processId);
+		  // newEndDTTime=etDAO.newEtaEndCalculation(app);
+		
+	   }
 
 private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name) {
 	   int finalstatus=0;

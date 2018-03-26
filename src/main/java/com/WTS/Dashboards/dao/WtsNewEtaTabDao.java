@@ -67,11 +67,11 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
   
   public Timestamp newEtaStartCalculation(WtsAppTab app ,Date newStartDTTime,int applicationId, int processId){
 	  System.out.println("start time loop entered");
-	  //String name= app.getName();
+	  String name= app.getName();
 	  int apId=applicationId;
 	  WtsNewEtaTab et= new WtsNewEtaTab();
 	  Timestamp startDTTime=app.getStartTime();
-	  Date fileStart=newStartDTTime;
+	 Timestamp fileStart= FileCreationTime.startTimestamp(name);
 	  Long startDiff= (fileStart.getTime()-startDTTime.getTime());
 //	  Timestamp start= new Timestamp(StartDiff);
 	  String hql= "From WtsAppTab as apn where apn.applicationId>=?";
@@ -94,7 +94,9 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			  et.setProblemFlag(1);
 			  //if(et.getEtaId()>0)
 			  addNewEta(et);
+			  
 	  }
+		  //System.out.println("new start time is "+fileStart);
 		  System.out.println("new start time set and value returned"+et.getNewEtaStartTransaction());
 		  return et.getNewEtaStartTransaction();
   }
