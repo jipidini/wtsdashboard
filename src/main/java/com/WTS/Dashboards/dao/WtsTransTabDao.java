@@ -218,16 +218,10 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		  int curSeq=appln.getSequence();
 		  int status=getFileStatus(startDTTime,endDtTime,name);
 		  WtsTransTab existtrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),appln.getApplicationId());
-			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && status ==WtsTransTabController.STATUS_IN_PROGRESS || status ==WtsTransTabController.STATUS_DELAYED) {
-				 Date oldStartDTTime=existtrans.getStartTransaction();
-				   Date oldEndDtTime=existtrans.getEndTransaction();
-				   Date newStartDTTime=null;
-					Date newEndDTTime=null;
-				   if(FileCreationTime.getStartfileCreationTime(name)!=null)
-					   newStartDTTime=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getStartfileCreationTime(name));
-				   newEndDTTime=DateUtility.getNewEndETA(oldStartDTTime,newStartDTTime,oldEndDtTime);
+			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && status ==WtsTransTabController.STATUS_IN_PROGRESS || status ==WtsTransTabController.STATUS_DELAYED || status ==WtsTransTabController.STATUS_SUCCESS) {
+				
 				 //UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
-				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true,newEndDTTime);
+				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true);
 			 }
 		  
 		  
@@ -311,27 +305,14 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	
    }
    
-   private void updateNewETA(int processId, int applicationId, boolean isProblem, Date newStartDTTime, Date newEndDTTime) {
-	   System.out.println("update new ETA entered");
-	// MOVE THIS to the ETA SERVICE
-	   String hql= "From WtsAppTab as apn where apn.applicationId=?";
-		WtsAppTab app= (WtsAppTab) entityManager.createQuery(hql).setParameter(1,applicationId).getSingleResult();
-	  /* WtsAppTab app = new WtsAppTab();
-	   app.setApplicationId(applicationId);
-	   app.setProcessId(processId);*/
-	    etDAO.newEtaStartCalculation(app,newStartDTTime,applicationId,processId);
-	 /*  newEndDTTime=etDAO.newEtaEndCalculation(app);*/
-	
-   }
    
-   private void updateNewETA(int processId, int applicationId, boolean isProblem, Date newEndDTTime) {
+   
+   private void updateNewETA(int processId, int applicationId, boolean isProblem) {
 	   System.out.println("update new ETA entered");
 		// MOVE THIS to the ETA SERVICE
-	   String hql= "From WtsAppTab as apn where apn.applicationId=?";
-		WtsAppTab app= (WtsAppTab) entityManager.createQuery(hql).setParameter(1,applicationId).getSingleResult();
-		    etDAO.newEtaStartCalculation(app,newEndDTTime,applicationId,processId);
-		  // newEndDTTime=etDAO.newEtaEndCalculation(app);
-		
+	 
+		WtsAppTab app= appDAO.getAppById(applicationId);
+		 etDAO.newEtaCalculation(app,processId);
 	   }
 
 private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name) {
@@ -349,10 +330,10 @@ private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name
 				   System.out.println("not started");
 			  }
 		 
-		 else if((!startFile) && (!endFile) && (failFile)){	
+		 else if((!startFile) && (!endFile) && current.after(startDTTime)){	
 		 		
 				finalstatus=2;
-}
+		 }
 			  
 		 else if((startFile) && (!endFile) && (failFile)){	
 				 		
@@ -367,7 +348,7 @@ private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name
 		 else if((startFile) && (!endFile) && current.before(endDtTime)){
 				 		finalstatus=4;
 				 		System.out.println("app still running");
-				  }
+		}
 					 
 				  
 				  System.out.println("current time is "+current);
