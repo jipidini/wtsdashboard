@@ -79,13 +79,19 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	  Timestamp endDTTime=app.getEndTime();
 	  Timestamp fileStart=null;
 	  Timestamp fileEnd=null;
-	  if(FileCreationTime.getStartfileCreationTime(name)!=null)
-		  fileEnd= FileCreationTime.startTimestamp(name);
-	  
-	  if(FileCreationTime.getEndfileCreationTime(name)!=null)
+	  Long endDiff=Long.valueOf(0);
+	  Long startDiff=Long.valueOf(0);
+	  if(FileCreationTime.getStartfileCreationTime(name)!=null) {
+		  fileStart= FileCreationTime.startTimestamp(name);
+		  startDiff= (fileStart.getTime()-startDTTime.getTime());
+	  }
+	  if(FileCreationTime.getEndfileCreationTime(name)!=null) {
 		  fileEnd= FileCreationTime.endTimestamp(name);
-	  Long startDiff= (fileStart.getTime()-startDTTime.getTime());
-	  Long endDiff= (fileEnd.getTime()-endDTTime.getTime());
+		 endDiff= (fileEnd.getTime()-endDTTime.getTime());
+	  }
+
+	  
+	  
 	  //start Change case
 	  if(startDiff>0) {
 //	  Timestamp start= new Timestamp(StartDiff);
@@ -94,12 +100,12 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		  while(apIt.hasNext()){
 			  WtsAppTab nextApp = (WtsAppTab) apIt.next();
 			  if(nextApp.getSequence()>currentSeq) {
-				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(app.getApplicationId(), app.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
 				  if(et==null) {
 					  et= new WtsNewEtaTab();
 				  }
 				  Timestamp startApp= nextApp.getStartTime();
-				  Timestamp endDtTime= app.getEndTime();
+				  Timestamp endDtTime= nextApp.getEndTime();
 				  Long newStartL= startDiff+startApp.getTime();
 				  Timestamp newStart= new Timestamp(newStartL);
 				  Long newEndL= startDiff+endDtTime.getTime();
@@ -112,12 +118,12 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				  et.setProblemFlag(0);
 				  etaLst.add(et);
 			  }else if(nextApp.getSequence()==currentSeq) {
-				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(app.getApplicationId(), app.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
 				  if(et==null) {
 					  et= new WtsNewEtaTab();
 				  }
 				  Timestamp startApp= nextApp.getStartTime();
-				  Timestamp endDtTime= app.getEndTime();
+				  Timestamp endDtTime= nextApp.getEndTime();
 				  Long newStartL= startDiff+startApp.getTime();
 				  Timestamp newStart= new Timestamp(newStartL);
 				  Long newEndL= startDiff+endDtTime.getTime();

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.WTS.Dashboards.Controller.WtsTransTabController;
 import com.WTS.Dashboards.Entity.WtsAppTab;
+import com.WTS.Dashboards.Entity.WtsNewEtaTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
 import com.WTS.Dashboards.Utility.DateUtility;
 import com.WTS.Dashboards.Utility.EmailUtil;
@@ -209,14 +210,35 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		  
 	   Timestamp startDTTime=null;
 	   Timestamp endDtTime=null;
+	   Timestamp startModDTTime=null;
+		  Timestamp   endModDtTime=null;
+	   int bufferTime=0;
 	   //APPLICATION
 	   if(transa.getApplicationId()>0) {
 		  WtsAppTab appln= appDAO.getAppById(transa.getApplicationId());
 		  String name= appln.getName();
 		  startDTTime=appln.getStartTime();
 		  endDtTime=appln.getEndTime();
+		  bufferTime=appln.getBufferTime();
 		  int curSeq=appln.getSequence();
-		  int status=getFileStatus(startDTTime,endDtTime,name);
+		 /*
+		  * Lokesh start
+		  * */
+		  startModDTTime=DateUtility.addBufferTime(startDTTime,bufferTime);
+		  System.out.println("Endtimefrom database"+endDtTime);
+		  
+		  endModDtTime=DateUtility.addBufferTime(endDtTime,bufferTime);
+		  WtsNewEtaTab et=etDAO.getTdyETATxnByProcessIdAppID(appln.getApplicationId(), appln.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+		  if(et!=null) {
+			  startDTTime=et.getNewEtaStartTransaction();
+			  endDtTime=et.getNewEtaEndTransaction();
+			  
+			  startModDTTime=DateUtility.addBufferTime(startDTTime,bufferTime);
+			  
+			  endModDtTime=DateUtility.addBufferTime(endDtTime,bufferTime);
+		  }
+		  
+		  int status=getFileStatus(startModDTTime,endModDtTime,name);
 		  WtsTransTab existtrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),appln.getApplicationId());
 			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && status ==WtsTransTabController.STATUS_IN_PROGRESS || status ==WtsTransTabController.STATUS_DELAYED || status ==WtsTransTabController.STATUS_SUCCESS) {
 				
@@ -285,7 +307,20 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 							 String name= wtsAppTab.getName();
 							  startDTTime=wtsAppTab.getStartTime();
 							  endDtTime=wtsAppTab.getEndTime();
-							 status=getFileStatus(startDTTime,endDtTime,name);
+							  bufferTime=wtsAppTab.getBufferTime();
+							  startModDTTime=DateUtility.addBufferTime(startDTTime,bufferTime);
+							  
+							  endModDtTime=DateUtility.addBufferTime(endDtTime,bufferTime);
+							  
+							  WtsNewEtaTab et=etDAO.getTdyETATxnByProcessIdAppID(wtsAppTab.getApplicationId(), wtsAppTab.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+							  if(et!=null) {
+								  startDTTime=et.getNewEtaStartTransaction();
+								  endDtTime=et.getNewEtaEndTransaction();
+								  startModDTTime=DateUtility.addBufferTime(startDTTime,bufferTime);
+								  
+								  endModDtTime=DateUtility.addBufferTime(endDtTime,bufferTime);
+							  }
+							 status=getFileStatus(startModDTTime,endModDtTime,name);
 							 WtsTransTab appTxn= this.getTransactionByAppIdProId(endAppID, transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate());
 							 if(appTxn!=null)
 							 transa.setEndTransaction(appTxn.getEndTransaction());

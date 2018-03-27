@@ -71,6 +71,10 @@ public class WtsAppTab implements Serializable {
 	@JsonProperty("Transactions")
     private Set<WtsTransTab> tran = new HashSet<WtsTransTab>();
 	
+	@OneToMany(fetch = FetchType.EAGER, mappedBy = "applicationId")
+	@JsonProperty("NewETA")
+    private Set<WtsNewEtaTab> eta = new HashSet<WtsNewEtaTab>();
+	
 	public int getApplicationId() {
 		return applicationId;
 	}
