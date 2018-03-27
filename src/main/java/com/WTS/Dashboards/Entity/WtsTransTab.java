@@ -15,11 +15,13 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 	@Entity
 	@Table(name="wts_trans_tab")
 	public class WtsTransTab implements Serializable { 
 		private static final long serialVersionUID = 1L;
+		
 		@Id
 		@GeneratedValue(strategy=GenerationType.IDENTITY)
 		@Column(name="transaction_id")

@@ -1,6 +1,7 @@
 package com.WTS.Dashboards.dao;
 
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
+import com.WTS.Dashboards.Utility.DateUtility;
 import com.WTS.Dashboards.Utility.FileCreationTime;
 import com.WTS.Dashboards.Utility.TreatmentDate;
 
@@ -35,8 +37,20 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		return entityManager.find(WtsNewEtaTab.class, newEtaId);
 	}
 	
+	/*public boolean dataExists(int processId, int applicationId, String Tdy ){
+		String hql= "FROM WtsNewEtaTab as ets WHERE eta.process_id=? and eta.application_id = ? and event_date=?";
+		int cnt = entityManager.createQuery(hql).setParameter(1,processId ).setParameter(2, applicationId).setParameter(3, Tdy).getResultList().size();
+		return cnt > 0 ? true : false;
+		}
+		*/
+	
 	public void addNewEta(WtsNewEtaTab newEta) {
+		/*boolean data= dataExists(newEta.getProcessId(),newEta.getApplicationId(),newEta.getEventDate());
+		if(!data)*/
 		entityManager.persist(newEta);
+		   entityManager.flush();
+		/*else
+			System.out.println("data present");*/
 		
 	}
 	
@@ -69,7 +83,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
   }
   
   
-  public void newEtaCalculation(WtsAppTab app , int processId){
+  public void newEtaCalculation(WtsAppTab app , int processId) throws ParseException {
 	  System.out.println("start time loop entered");
 	  String name= app.getName();
 	  int apId=app.getApplicationId();
@@ -77,6 +91,9 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	 List<WtsNewEtaTab> etaLst= new ArrayList<>();
 	  Timestamp startDTTime=app.getStartTime();
 	  Timestamp endDTTime=app.getEndTime();
+	  startDTTime=DateUtility.addBufferTime(startDTTime,app.getBufferTime());  
+	  endDTTime=DateUtility.addBufferTime(endDTTime,app.getBufferTime());
+	 
 	  Timestamp fileStart=null;
 	  Timestamp fileEnd=null;
 	  Long endDiff=Long.valueOf(0);
@@ -91,14 +108,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	  }
 
 	  
-	  
+	  List apps =appDAO.getAllAppsByProcess(app.getProcessId());
 	  //start Change case
 	  if(startDiff>0) {
 //	  Timestamp start= new Timestamp(StartDiff);
-	  List apps =appDAO.getAllAppsByProcess(app.getProcessId());
-		 Iterator<WtsAppTab> apIt=apps.iterator();
-		  while(apIt.hasNext()){
-			  WtsAppTab nextApp = (WtsAppTab) apIt.next();
+	 System.out.println("in start DIFF");
+		 Iterator<WtsAppTab> apItr=apps.iterator();
+		  while(apItr.hasNext()){
+			  WtsAppTab nextApp = (WtsAppTab) apItr.next();
 			  if(nextApp.getSequence()>currentSeq) {
 				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
 				  if(et==null) {
@@ -152,7 +169,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		  }
 		  
 	  }else if(endDiff>0) {
-		  List apps =appDAO.getAllAppsByProcess(app.getProcessId());
+		  System.out.println("in end DIFF");
 			 Iterator<WtsAppTab> apIt=apps.iterator();
 			  while(apIt.hasNext()){
 				  WtsAppTab nextApp = (WtsAppTab) apIt.next();
@@ -210,6 +227,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			  }
 			  
 	  }
+	  entityManager.flush();
 		  //System.out.println("new start time is "+fileStart);
 		  System.out.println("ETA set for start transations..");
   }

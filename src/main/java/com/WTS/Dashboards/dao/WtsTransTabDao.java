@@ -240,7 +240,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		  
 		  int status=getFileStatus(startModDTTime,endModDtTime,name);
 		  WtsTransTab existtrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),appln.getApplicationId());
-			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && status ==WtsTransTabController.STATUS_IN_PROGRESS || status ==WtsTransTabController.STATUS_DELAYED || status ==WtsTransTabController.STATUS_SUCCESS) {
+			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && (status ==WtsTransTabController.STATUS_IN_PROGRESS || status ==WtsTransTabController.STATUS_DELAYED || status ==WtsTransTabController.STATUS_SUCCESS)) {
 				
 				 //UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
 				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true);
@@ -342,7 +342,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
    
    
    
-   private void updateNewETA(int processId, int applicationId, boolean isProblem) {
+   private void updateNewETA(int processId, int applicationId, boolean isProblem) throws ParseException {
 	   System.out.println("update new ETA entered");
 		// MOVE THIS to the ETA SERVICE
 	 
@@ -360,10 +360,15 @@ private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name
 			boolean failFile= FileCreationTime.failFileExist(name);
 			
 			Timestamp current= currentTimestamp();
-		 if( (!startFile) && (!endFile) && (!failFile)){
+			if( (!startFile) && (!endFile) && (!failFile) && current.after(startDTTime)){
+				   finalstatus=2;
+				   System.out.println("Delayed RED.");
+			  }
+			else  if( (!startFile) && (!endFile) && (!failFile)){
 				   finalstatus=0;
 				   System.out.println("not started");
 			  }
+		 
 		 
 		 else if((!startFile) && (!endFile) && current.after(startDTTime)){	
 		 		
@@ -377,7 +382,8 @@ private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime,String name
 		 
 		else  if((startFile) && (!endFile) && (current.after(endDtTime)) ) {
 				 		 
-				 		 				finalstatus=3;
+				 		 				//finalstatus=3;
+										finalstatus=2;
 				 		 				System.out.println("application completion delayed");
 	   }
 		 else if((startFile) && (!endFile) && current.before(endDtTime)){

@@ -20,6 +20,7 @@ import com.WTS.Dashboards.Service.WtsTransTabService;
 import com.WTS.Dashboards.Utility.DateUtility;
 import com.WTS.Dashboards.Utility.TreatmentDate;
 import com.WTS.Dashboards.dao.WtsAppTabDao;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @Controller
@@ -51,9 +52,12 @@ public class WtsTransTabController {
 		return new ResponseEntity<WtsTransTab>(Trans, HttpStatus.OK);
 	}
 	
+	
 	@GetMapping("procup/date/{processId}")
+
 	public  ResponseEntity<List <WtsTransTab>> getTransactionByProcessId(@PathVariable("processId") int processId) throws Exception
 	{
+		
 		List <WtsTransTab> finalList=trs.fetchAllTxns(processId);
 	 
 	 return new ResponseEntity<List <WtsTransTab>>(finalList,HttpStatus.OK);
@@ -69,6 +73,7 @@ public class WtsTransTabController {
 	
 	@GetMapping("tran")
 	public ResponseEntity<List<WtsTransTab>> getAllTransaction() {
+		
 		List<WtsTransTab> list = trs.getAlltransaction();
 		return new ResponseEntity<List<WtsTransTab>>(list, HttpStatus.OK);	
 	}

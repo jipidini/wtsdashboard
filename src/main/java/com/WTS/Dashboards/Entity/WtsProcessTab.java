@@ -34,13 +34,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		@Column(name="weight")
 		private int weight;
 		@Column(name="last_update_time")
-		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		private Timestamp lastUpdateTime;
-		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		@Column(name="expected_start_time")
 		private Timestamp expectedStartTime;
 		@Column(name="expected_end_time")
-		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		private Timestamp expectedEndTime;
 		@Column(name="enable_flag")
 		private int enableFlag;
