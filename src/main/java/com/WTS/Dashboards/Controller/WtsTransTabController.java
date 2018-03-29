@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
+import com.WTS.Dashboards.Service.EmailService;
 import com.WTS.Dashboards.Service.WtsAppTabService;
 import com.WTS.Dashboards.Service.WtsTransTabService;
 
@@ -40,6 +41,10 @@ public class WtsTransTabController {
 	
 	@Autowired
 	private WtsNewEtaTabDao etaDAO;
+	
+	@Autowired
+    private EmailService emailService;
+
 	
 	public static final int STATUS_IN_PROGRESS=4;
 	public static final int STATUS_SUCCESS=1;
@@ -70,6 +75,16 @@ public class WtsTransTabController {
 		
 	}
 	
+	
+	@GetMapping("testSMS/{number}")
+
+	public  ResponseEntity<List <WtsTransTab>> testSMS(@PathVariable("number") String number) throws Exception
+	{
+		emailService.sendREDalertSMS(number);
+		
+	 return new ResponseEntity<List <WtsTransTab>>(new ArrayList<>(),HttpStatus.OK);
+		
+	}
 	@GetMapping("tran/{transId}")
 	public ResponseEntity<WtsTransTab> getTransactionById(@PathVariable("transId") int transId) {
 		WtsTransTab Trans = trs.getTransactionById(transId);//2

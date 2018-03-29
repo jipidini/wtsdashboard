@@ -80,7 +80,8 @@ public class EmailService {
 	@Value("${cgi.dashboard.sms.redalert.text}")
 	private String smsRedText;
 	
-	
+	@Value("${cgi.dashboard.sms.disable}")
+	private String smsDisable;
 	
 	public void setSmtpHost(String smtpHost) {
 		this.smtpHost = smtpHost;
@@ -360,12 +361,23 @@ public class EmailService {
 		public void setSmsRedText(String smsRedText) {
 			this.smsRedText = smsRedText;
 		}
-
 		
-		 public void sendETASMS(String phoneNumber) {
+		
+		
+		 public String getSmsDisable() {
+			return smsDisable;
+		}
+
+		public void setSmsDisable(String smsDisable) {
+			this.smsDisable = smsDisable;
+		}
+
+		public void sendETASMS(String phoneNumber) {
+			if(smsDisable!=null && !"YES".equalsIgnoreCase(smsDisable))
              new SMSutility().sendSMS(smsHost, smsPort, smsUserName, smsPassword, phoneNumber, smsETAText);
 		 }
 		 public void sendREDalertSMS(String phoneNumber) {
+			 if(smsDisable!=null && !"YES".equalsIgnoreCase(smsDisable))
              new SMSutility().sendSMS(smsHost, smsPort, smsUserName, smsPassword, phoneNumber, smsRedText);
 		 }
 		
