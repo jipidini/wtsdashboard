@@ -50,7 +50,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		@JsonProperty("Applications")
 		private Set<WtsAppTab> line = new HashSet<WtsAppTab>();
 	
-		
+		@OneToMany(fetch = FetchType.EAGER, mappedBy = "processId")
+		@JsonProperty("NewProcessETA")
+	    private Set<WtsNewEtaTab> eta = new HashSet<WtsNewEtaTab>();
 		
 		public int getProcessId() {
 			return processId;

@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
+import com.WTS.Dashboards.Entity.WtsProcessTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
 import com.WTS.Dashboards.Utility.DateUtility;
 import com.WTS.Dashboards.Utility.FileCreationTime;
@@ -33,24 +35,19 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	@Autowired
 	private WtsAppTabDao appDAO;
 	
+	@Autowired
+	private WtsProcessTabDao processDAO;
+	
 	public WtsNewEtaTab getEtaById(int newEtaId) {
 		return entityManager.find(WtsNewEtaTab.class, newEtaId);
 	}
 	
-	/*public boolean dataExists(int processId, int applicationId, String Tdy ){
-		String hql= "FROM WtsNewEtaTab as ets WHERE eta.process_id=? and eta.application_id = ? and event_date=?";
-		int cnt = entityManager.createQuery(hql).setParameter(1,processId ).setParameter(2, applicationId).setParameter(3, Tdy).getResultList().size();
-		return cnt > 0 ? true : false;
-		}
-		*/
 	
 	public void addNewEta(WtsNewEtaTab newEta) {
-		/*boolean data= dataExists(newEta.getProcessId(),newEta.getApplicationId(),newEta.getEventDate());
-		if(!data)*/
+		
 		entityManager.persist(newEta);
 		   entityManager.flush();
-		/*else
-			System.out.println("data present");*/
+		
 		
 	}
 	
@@ -90,6 +87,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	  int currentSeq=app.getSequence();
 	 List<WtsNewEtaTab> etaLst= new ArrayList<>();
 	  Timestamp startDTTime=app.getStartTime();
+	  int buf=app.getBufferTime();
 	  Timestamp endDTTime=app.getEndTime();
 	  startDTTime=DateUtility.addBufferTime(startDTTime,app.getBufferTime());  
 	  endDTTime=DateUtility.addBufferTime(endDTTime,app.getBufferTime());
@@ -100,13 +98,20 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	  Long startDiff=Long.valueOf(0);
 	  if(FileCreationTime.getStartfileCreationTime(name)!=null) {
 		  fileStart= FileCreationTime.startTimestamp(name);
-		  startDiff= (fileStart.getTime()-startDTTime.getTime());
+		  startDiff= (fileStart.getTime()-startDTTime.getTime()+buf);
 	  }
 	  if(FileCreationTime.getEndfileCreationTime(name)!=null) {
 		  fileEnd= FileCreationTime.endTimestamp(name);
-		 endDiff= (fileEnd.getTime()-endDTTime.getTime());
+		 endDiff= (fileEnd.getTime()-endDTTime.getTime()+buf);
 	  }
-
+	  WtsProcessTab processObj= processDAO.getProcessById(processId);
+	  Timestamp startProcessTime=null;
+	  Timestamp endProcessTime=null;
+	  
+	  if(processObj!=null) {
+		  startProcessTime=processObj.getExpectedStartTime();
+		  endProcessTime=processObj.getExpectedEndTime();
+	  }
 	  
 	  List apps =appDAO.getAllAppsByProcess(app.getProcessId());
 	  //start Change case
@@ -145,6 +150,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				  Timestamp newStart= new Timestamp(newStartL);
 				  Long newEndL= startDiff+endDtTime.getTime();
 				  Timestamp newEnd= new Timestamp(newEndL);
+				  endProcessTime=  new Timestamp(startDiff+endProcessTime.getTime());
 				  et.setNewEtaEndTransaction(newEnd);  
 				  et.setNewEtaStartTransaction(newStart); 
 				  et.setApplicationId(nextApp.getApplicationId());
@@ -158,6 +164,18 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		
 			  
 	  }
+		//update process ETA
+		  WtsNewEtaTab exist_proc_eta=getTdyETATxnByProcessId(processId, TreatmentDate.getInstance().getTreatmentDate());
+		  if(exist_proc_eta==null) {
+			  exist_proc_eta= new WtsNewEtaTab();
+		  }
+		  
+		  exist_proc_eta.setProcessId(processId);
+		  exist_proc_eta.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+		  exist_proc_eta.setProblemFlag(0);
+		  exist_proc_eta.setNewEtaEndTransaction(endProcessTime);  
+		  exist_proc_eta.setNewEtaStartTransaction(startProcessTime); 
+		  etaLst.add(exist_proc_eta);
 		  
 			 
 		  if(!etaLst.isEmpty()) {
@@ -203,6 +221,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					  Timestamp newStart= new Timestamp(newStartL);
 					  Long newEndL= endDiff+endDtTime.getTime();
 					  Timestamp newEnd= new Timestamp(newEndL);
+					  endProcessTime=  new Timestamp(endDiff+endProcessTime.getTime());
 					  et.setNewEtaEndTransaction(newEnd);  
 					  et.setNewEtaStartTransaction(newStart); 
 					  et.setApplicationId(nextApp.getApplicationId());
@@ -211,12 +230,20 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					  et.setProblemFlag(1);
 					  etaLst.add(et);
 				  }
-				 
-				 
-			
 				  
 		  }
+			//update process ETA
+			  WtsNewEtaTab exist_proc_eta=getTdyETATxnByProcessId(processId, TreatmentDate.getInstance().getTreatmentDate());
+			  if(exist_proc_eta==null) {
+				  exist_proc_eta= new WtsNewEtaTab();
+			  }
 			  
+			  exist_proc_eta.setProcessId(processId);
+			  exist_proc_eta.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+			  exist_proc_eta.setProblemFlag(0);
+			  exist_proc_eta.setNewEtaEndTransaction(endProcessTime);  
+			  exist_proc_eta.setNewEtaStartTransaction(startProcessTime); 
+			  etaLst.add(exist_proc_eta);
 				 
 			  if(!etaLst.isEmpty()) {
 				  Iterator<WtsNewEtaTab> etaItr=etaLst.iterator();
@@ -225,15 +252,35 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					addNewEta(wtsNewEtaTab);
 				}
 			  }
-			  
+			
 	  }
+	/*//Process ETA calculation start
+	  WtsNewEtaTab eta= new WtsNewEtaTab();
+		 eta= EtaProcessTime(processId);
+		 etaLst.add(eta);
+		 System.out.println("process ETA time added for process!!  "+processId);
+		 //Process ETA calculation end
+*/	
 	  entityManager.flush();
 		  //System.out.println("new start time is "+fileStart);
 		  System.out.println("ETA set for start transations..");
   }
   
   
-  public WtsNewEtaTab getTdyETATxnByProcessIdAppID(int appId,int processid, String treatDt)
+  private WtsNewEtaTab getTdyETATxnByProcessId(int processId, String treatmentDate) {
+	  String hql="from WtsNewEtaTab WHERE processId=?  AND eventDate= ?";
+		Query qry=entityManager.createQuery(hql);
+		qry.setParameter(1,processId);
+		qry.setParameter(2,treatmentDate);
+		if(qry.getResultList()!=null && !qry.getResultList().isEmpty())
+			return (WtsNewEtaTab)qry.getResultList().get(0);
+		else
+		return null;
+				
+}
+
+
+public WtsNewEtaTab getTdyETATxnByProcessIdAppID(int appId,int processid, String treatDt)
 	{
 		
 		String hql="from WtsNewEtaTab WHERE processId=? AND applicationId=? AND eventDate= ?";
@@ -248,7 +295,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				
 	}
   
-  public Timestamp newEtaEndCalculation(WtsAppTab app,Date newEndDTTime,int applicationId, int processId){
+ /* public Timestamp newEtaEndCalculation(WtsAppTab app,Date newEndDTTime,int applicationId, int processId){
 	  String name= app.getName();
 	  int apId=app.getApplicationId();
 	  WtsNewEtaTab et= new WtsNewEtaTab();
@@ -278,5 +325,53 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	  }
 		  System.out.println("new end time set and value returned");
 		return et.getNewEtaEndTransaction();
+  }*/
+  
+  public List<WtsNewEtaTab> getEtaByAppIdProcessId(int processId,int appId) {
+	  try{
+	  String hql="From WtsNewEtaTab where applicationId=? and processId=? and eventDate=?";
+	List <WtsNewEtaTab> et= (List<WtsNewEtaTab>) entityManager.createQuery(hql).setParameter(1,appId).setParameter(2,processId).setParameter(3, TreatmentDate.getInstance().getTreatmentDate()).getSingleResult();
+	  return et;
+	  }catch (Exception e){
+		  e.printStackTrace();
+	  return null;
+	  }
   }
+  
+  public WtsNewEtaTab EtaProcessTime(int processId){
+	  WtsNewEtaTab eta= new WtsNewEtaTab();
+	  WtsNewEtaTab etS=new WtsNewEtaTab();
+	  WtsNewEtaTab etE=new WtsNewEtaTab();
+	  int fApp= appDAO.getFirstAppId(processId);
+	  int lApp= appDAO.getLastAppId(processId);
+	  etS= (WtsNewEtaTab) getEtaByAppIdProcessId(processId,fApp);
+	  etE= (WtsNewEtaTab) getEtaByAppIdProcessId(processId,lApp);
+	  if(etS!=null){
+		  eta.setNewEtaStartTransaction(etS.getNewEtaStartTransaction());
+	  }
+	  else{
+		  WtsAppTab app=appDAO.getAppById(fApp);
+		  eta.setNewEtaEndTransaction(app.getStartTime());
+	  }
+	  
+	  if(etE!=null){
+		  eta.setNewEtaEndTransaction(etS.getNewEtaEndTransaction());
+	  }
+	  else{
+		  WtsAppTab app=appDAO.getAppById(lApp);
+		  eta.setNewEtaEndTransaction(app.getEndTime());
+	  }
+	  
+	  eta.setProcessId(processId);
+	  eta.setApplicationId(0);
+	  eta.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+	  eta.setProblemFlag(1);
+	  return eta;
+	  }		
+	
+  
+  public List<WtsNewEtaTab> getAllEta() {
+		String hql = "FROM WtsNewEtaTab as et ORDER BY et.applicationId";
+		return (List<WtsNewEtaTab>) entityManager.createQuery(hql).getResultList();
+	}	
 }

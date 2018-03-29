@@ -1,15 +1,23 @@
 package com.WTS.Dashboards.Entity;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -47,8 +55,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		@Column(name="status_id")
 		private int statusId;
 		
+		 @Column(name="sendemailflag")
+         private int sendemailflag;
 		
-		@OneToMany(fetch = FetchType.EAGER, mappedBy = "WtsTransTab")
+		//@OneToMany(fetch = FetchType.EAGER, mappedBy = "WtsTransTab")
+		
+		/* @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
+		    @JoinColumn(name = "applicationId", referencedColumnName = "applicationId")
+		    private WtsNewEtaTab eta;*/
+
+	   
 		public int getTransactionId() {
 			return transactionId;
 		}
@@ -124,6 +140,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 			this.statusId = statusId;
 		}
 		
-		
+		public int getSendemailflag() {
+            return sendemailflag;
+}
+public void setSendemailflag(int sendemailflag) {
+            this.sendemailflag = sendemailflag;
+}
 	}
 

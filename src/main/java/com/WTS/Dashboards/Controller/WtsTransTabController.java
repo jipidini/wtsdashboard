@@ -20,12 +20,14 @@ import com.WTS.Dashboards.Service.WtsTransTabService;
 import com.WTS.Dashboards.Utility.DateUtility;
 import com.WTS.Dashboards.Utility.TreatmentDate;
 import com.WTS.Dashboards.dao.WtsAppTabDao;
+import com.WTS.Dashboards.dao.WtsNewEtaTabDao;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @Controller
 @RequestMapping("wts")
 public class WtsTransTabController {
+	
 	@Autowired
 	private WtsTransTabService trs;
 
@@ -35,6 +37,9 @@ public class WtsTransTabController {
 	
 	@Autowired
 	private WtsAppTabDao appDAO;
+	
+	@Autowired
+	private WtsNewEtaTabDao etaDAO;
 	
 	public static final int STATUS_IN_PROGRESS=4;
 	public static final int STATUS_SUCCESS=1;
@@ -58,7 +63,8 @@ public class WtsTransTabController {
 	public  ResponseEntity<List <WtsTransTab>> getTransactionByProcessId(@PathVariable("processId") int processId) throws Exception
 	{
 		
-		List <WtsTransTab> finalList=trs.fetchAllTxns(processId);
+		List  finalList=trs.fetchAllTxns(processId);
+		finalList.addAll(etaDAO.getAllEta());
 	 
 	 return new ResponseEntity<List <WtsTransTab>>(finalList,HttpStatus.OK);
 		

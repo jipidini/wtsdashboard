@@ -87,5 +87,25 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 		 
 		
 	}
+	
+	public int getFirstAppId(int processId){
+		String hql= "select applicationId from WtsAppTab where processId=? and sequence=1 ";
+		int id = (int) entityManager.createQuery(hql).setParameter(1,processId).getSingleResult();
+		return id;
+	}
+	
+	public int getLastAppId(int processId){
+		String hqls= "select max(sequence) from WtsAppTab where processId=?";
+		int seq = (int) entityManager.createQuery(hqls).setParameter(1,processId).getSingleResult();
+		String hql= "select applicationId from WtsAppTab where processId=? and sequence=?";
+		int id = (int) entityManager.createQuery(hql).setParameter(1,processId).setParameter(2,seq).getSingleResult();
+		return id;
+	}
+	
+	public int getLastSeq(int processId){
+		String hqls= "select max(sequence) from WtsAppTab where processId=?";
+		int seq = (int) entityManager.createQuery(hqls).setParameter(1,processId).getSingleResult();
+		return seq;
+	}
 
 }

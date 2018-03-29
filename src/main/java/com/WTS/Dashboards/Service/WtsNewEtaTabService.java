@@ -1,6 +1,7 @@
 package com.WTS.Dashboards.Service;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,11 @@ public class WtsNewEtaTabService implements IWtsServiceInterface{
 
 	@Autowired
 	private WtsNewEtaTabDao etDao;
+	
+	public List<WtsNewEtaTab> getAllEta() {
+		return etDao.getAllEta();
+		
+	}
 	
 	/*public Timestamp newEtaStartCalculation(WtsAppTab app){
 		return etDao.newEtaStartCalculation(app);
