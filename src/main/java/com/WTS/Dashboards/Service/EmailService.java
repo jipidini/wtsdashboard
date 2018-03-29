@@ -1,4 +1,4 @@
-/*package com.WTS.Dashboards.Service;
+package com.WTS.Dashboards.Service;
 
 import java.util.Properties;
 
@@ -20,6 +20,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Service;
 
+import com.WTS.Dashboards.Utility.SMSutility;
 import com.sun.mail.smtp.SMTPTransport;
 
 @Service
@@ -60,6 +61,27 @@ public class EmailService {
 		return smtpHost;
 	}
 
+	
+	@Value("${cgi.dashboard.sms.host}")
+	private String smsHost;
+	
+	@Value("${cgi.dashboard.sms.port}")
+	private String smsPort;
+	
+	@Value("${cgi.dashboard.sms.username}")
+	private String smsUserName;
+	
+	@Value("${cgi.dashboard.sms.password}")
+	private String smsPassword;
+	
+	@Value("${cgi.dashboard.sms.newEta.text}")
+	private String smsETAText;
+	
+	@Value("${cgi.dashboard.sms.redalert.text}")
+	private String smsRedText;
+	
+	
+	
 	public void setSmtpHost(String smtpHost) {
 		this.smtpHost = smtpHost;
 	}
@@ -220,23 +242,12 @@ public class EmailService {
 	     
 	    mailSender.setUsername(getSmtpUser());
 	    mailSender.setPassword(getSmtpPwd());
-	    	public JavaMailSender getJavaMailSender() {
-	    JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
 
 	    mailSender.setHost(getSmtpHost());
 	    mailSender.setPort(Integer.valueOf(getSmtpPort()));
 	     
 	    mailSender.setUsername(getSmtpUser());
 	    mailSender.setPassword(getSmtpPwd());
-	    
-	    Properties props = mailSender.getJavaMailProperties();
-	    props.put("mail.transport.protocol", "smtp");
-	    props.put("mail.smtp.auth", Boolean.valueOf(getSmtpAuth()));
-	    props.put("mail.smtp.starttls.enable", Boolean.valueOf(getSmtpTls()));
-	    props.put("mail.debug", "true");
-	     
-	    return mailSender;
-	}
 	    Properties props = mailSender.getJavaMailProperties();
 	    props.put("mail.transport.protocol", "smtp");
 	    props.put("mail.smtp.auth", Boolean.valueOf(getSmtpAuth()));
@@ -269,37 +280,93 @@ public class EmailService {
          
          public void sendMsg() {
                  try {
-                 Properties props = new Properties();
-        props.put("mail.smtp.starttls.enable",getSmtpTls());
-        props.put("mail.smtp.starttls.required",getSmtpTls());
-        props.put("mail.smtp.sasl.enable", getSmtpTls());
- 
-      
-
-        Session session = Session.getInstance(props);
-        session.setDebug(true);
-
-        SMTPTransport smtpTransport = connectToSmtp(session, this.smtpHost, Integer.valueOf(this.smtpPort),
-                                            this.smtpUser, true);
-
-        Message message = new MimeMessage(session);
-        message.setSubject(getSubject());
-        message.setText(getMailtextfornewEta());
-
-
-        Address toAddress = new InternetAddress();
-        message.setRecipient(Message.RecipientType.TO, toAddress);
-
-        smtpTransport.sendMessage(message, message.getAllRecipients());
-        smtpTransport.close();
-    } catch (MessagingException e) {
-        System.out.println("Messaging Exception");
-        System.out.println("Error: " + e.getMessage());
-    } catch (Exception e) {
-        System.out.println("Messaging Exception");
-        System.out.println("Error: " + e.getMessage());
-    }
+                	 	Properties props = new Properties();
+					        props.put("mail.smtp.starttls.enable",getSmtpTls());
+					        props.put("mail.smtp.starttls.required",getSmtpTls());
+					        props.put("mail.smtp.sasl.enable", getSmtpTls());
+					 
+					      
+					
+					        Session session = Session.getInstance(props);
+					        session.setDebug(true);
+					
+					        SMTPTransport smtpTransport = connectToSmtp(session, this.smtpHost, Integer.valueOf(this.smtpPort),
+					                                            this.smtpUser, true);
+					
+					        Message message = new MimeMessage(session);
+					        message.setSubject(getSubject());
+					        message.setText(getMailtextfornewEta());
+					
+					
+					        Address toAddress = new InternetAddress();
+					        message.setRecipient(Message.RecipientType.TO, toAddress);
+					
+					        smtpTransport.sendMessage(message, message.getAllRecipients());
+					        smtpTransport.close();
+			    } catch (MessagingException e) {
+			        System.out.println("Messaging Exception");
+			        System.out.println("Error: " + e.getMessage());
+			    } catch (Exception e) {
+			        System.out.println("Messaging Exception");
+			        System.out.println("Error: " + e.getMessage());
+			    }
          }
 
+         //below are for SMS configuration
+		public String getSmsHost() {
+			return smsHost;
+		}
+
+		public void setSmsHost(String smsHost) {
+			this.smsHost = smsHost;
+		}
+
+		public String getSmsPort() {
+			return smsPort;
+		}
+
+		public void setSmsPort(String smsPort) {
+			this.smsPort = smsPort;
+		}
+
+		public String getSmsUserName() {
+			return smsUserName;
+		}
+
+		public void setSmsUserName(String smsUserName) {
+			this.smsUserName = smsUserName;
+		}
+
+		public String getSmsPassword() {
+			return smsPassword;
+		}
+
+		public void setSmsPassword(String smsPassword) {
+			this.smsPassword = smsPassword;
+		}
+
+		public String getSmsETAText() {
+			return smsETAText;
+		}
+
+		public void setSmsETAText(String smsETAText) {
+			this.smsETAText = smsETAText;
+		}
+
+		public String getSmsRedText() {
+			return smsRedText;
+		}
+
+		public void setSmsRedText(String smsRedText) {
+			this.smsRedText = smsRedText;
+		}
+
+		
+		 public void sendETASMS(String phoneNumber) {
+             new SMSutility().sendSMS(smsHost, smsPort, smsUserName, smsPassword, phoneNumber, smsETAText);
+		 }
+		 public void sendREDalertSMS(String phoneNumber) {
+             new SMSutility().sendSMS(smsHost, smsPort, smsUserName, smsPassword, phoneNumber, smsRedText);
+		 }
+		
 	}
-*/

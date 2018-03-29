@@ -13,27 +13,7 @@ public class SMSutility   implements SmsEventListener{
     private Object link = null; // Just to keep this object alive.
     private int counter = 0;
     public SMSutility() {
-		 this.link = this; // Keeps this object alive.
-	        this.transceiver = SmsTransceiver.getInstance(); // Get the transceiver object.
-	 
-	        // Initialize transceiver.
-	        String smsHost = "cpa.vianett.no";
-	        String smsPort = "31337";
-	        String smsUsername = "debasish.behera@cgi.com";
-	        String smsPassword = "oeccc";
-	        this.transceiver.initialize( smsHost, Integer.parseInt( smsPort ), smsUsername, smsPassword, new SmsScreenLogger() );
-	 
-	        this.transceiver.addSmsEventListener( this ); // Registrer this class as listener for SMS events.
-	 
-	        // Send message
-	        Sms sms = new Sms();
-	        sms.setId( ++this.counter );
-	        sms.setReplyPath( 100 );
-	        sms.setSender( "1963" ); // Set the sender number.
-	        sms.setMessage( "Attention from CGI Dashboard. Your batch Status is RED. Please take steps to rectify." );
-	        sms.setRecipient( "919632999664" ); // The recipients phone number.
-	 
-	        this.transceiver.send( sms );
+		 
 	}
 	
 	  /**
@@ -65,7 +45,22 @@ public class SMSutility   implements SmsEventListener{
 	        }
 	    }
 	    
-	public static void main(String[] args) {
-		new SMSutility();
-	}
+	    public void sendSMS(String smsHost,String smsPort, String smsUsername , String smsPassword, String phoneNumber,String message) {
+	    	this.link = this; // Keeps this object alive.
+	        this.transceiver = SmsTransceiver.getInstance();  
+	        this.transceiver.initialize( smsHost, Integer.parseInt( smsPort ), smsUsername, smsPassword, new SmsScreenLogger() );
+	 
+	        this.transceiver.addSmsEventListener( this );  
+	 
+	        // Send message
+	        Sms sms = new Sms();
+	        sms.setId( ++this.counter );
+	        sms.setReplyPath( 100 );
+	        sms.setSender( "1963" ); // Set the sender number.
+	        sms.setMessage( message);
+	        sms.setRecipient(phoneNumber); // The recipients phone number.
+	 
+	        this.transceiver.send( sms );
+	    }
+	
 }

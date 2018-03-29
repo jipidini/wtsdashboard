@@ -79,7 +79,7 @@
 			<groupId>vianett</groupId>
 			<artifactId>sms</artifactId>
 			<version>2.1</version>
-			<systemPath>C:\Deb\Others\CGI\dashboard_git\wtsdashboard\src\lib\vianett_sms_v2_1.jar</systemPath>
+			<systemPath>${basedir}/src/lib/vianett_sms_v2_1.jar</systemPath>
 			<scope>system</scope>
 		</dependency>
 	</dependencies>
