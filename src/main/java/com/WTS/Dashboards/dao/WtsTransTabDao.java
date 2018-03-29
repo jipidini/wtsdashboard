@@ -19,9 +19,9 @@ import com.WTS.Dashboards.Controller.WtsTransTabController;
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
+import com.WTS.Dashboards.Service.EmailService;
 //import com.WTS.Dashboards.Service.EmailService;
 import com.WTS.Dashboards.Utility.DateUtility;
-import com.WTS.Dashboards.Utility.EmailUtil;
 import com.WTS.Dashboards.Utility.FileCreationTime;
 import com.WTS.Dashboards.Utility.TreatmentDate;
 
@@ -41,9 +41,9 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	
 	@Autowired
 	private WtsNewEtaTabDao etDAO;       
-	/*@Autowired
+	@Autowired
     private EmailService emailService;
-*/
+
 	
 	
 	
@@ -268,6 +268,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			   if(trans.getSendemailflag()==0)
                {
 					//emailService.sendMailRedAlert(appln.getEmailId());
+//				   emailService.sendREDalertSMS(appln.getSupportContact());
 					trans.setSendemailflag(1);
 					}
                List <WtsAppTab> apps=appDAO.getAllAppsByProcess(transa.getProcessId());
@@ -278,6 +279,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
                if(FileCreationTime.getFailfileCreationTime(name)!=null)
                                             transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getFailfileCreationTime(name)));
 //                            emailService.sendMailRedAlert(app.getEmailId());
+//               emailService.sendREDalertSMS(appln.getSupportContact());
                
 
                                             }

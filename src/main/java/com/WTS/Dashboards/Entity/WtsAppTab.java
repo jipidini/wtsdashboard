@@ -53,6 +53,10 @@ public class WtsAppTab implements Serializable {
                 @Column(name="email_id")
                 private String emailId;
                
+                @Column(name="support_contact")
+                private String supportContact;
+                
+                
                 @Column(name="start_time")
                 @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
                 private Timestamp startTime;
@@ -160,6 +164,12 @@ public class WtsAppTab implements Serializable {
                 public void setEmailId(String emailId) {
                                 this.emailId = emailId;
                 }
+				public String getSupportContact() {
+					return supportContact;
+				}
+				public void setSupportContact(String supportContact) {
+					this.supportContact = supportContact;
+				}
                 
                 
 }
