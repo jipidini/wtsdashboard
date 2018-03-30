@@ -3,6 +3,8 @@ package com.WTS.Dashboards.dao;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -87,22 +89,28 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	  int currentSeq=app.getSequence();
 	 List<WtsNewEtaTab> etaLst= new ArrayList<>();
 	  Timestamp startDTTime=app.getStartTime();
-	  int buf=app.getBufferTime();
 	  Timestamp endDTTime=app.getEndTime();
-	  startDTTime=DateUtility.addBufferTime(startDTTime,app.getBufferTime());  
-	  endDTTime=DateUtility.addBufferTime(endDTTime,app.getBufferTime());
-	 
+	  int buf=app.getBufferTime();
+	  Long origDiff=Long.valueOf(0);
+	  origDiff=endDTTime.getTime()-startDTTime.getTime();
+	  
+//	  startDTTime=DateUtility.addBufferTime(startDTTime,app.getBufferTime());  
+//	  endDTTime=DateUtility.addBufferTime(endDTTime,app.getBufferTime());
+//	 
+	  
 	  Timestamp fileStart=null;
 	  Timestamp fileEnd=null;
+	  Timestamp lastEnd=null;
 	  Long endDiff=Long.valueOf(0);
 	  Long startDiff=Long.valueOf(0);
+	  
 	  if(FileCreationTime.getStartfileCreationTime(name)!=null) {
 		  fileStart= FileCreationTime.startTimestamp(name);
-		  startDiff= (fileStart.getTime()-startDTTime.getTime()+buf);
+		  startDiff= (fileStart.getTime()-startDTTime.getTime());
 	  }
 	  if(FileCreationTime.getEndfileCreationTime(name)!=null) {
 		  fileEnd= FileCreationTime.endTimestamp(name);
-		 endDiff= (fileEnd.getTime()-endDTTime.getTime()+buf);
+		 endDiff= (fileEnd.getTime()-endDTTime.getTime());
 	  }
 	  WtsProcessTab processObj= processDAO.getProcessById(processId);
 	  Timestamp startProcessTime=null;
@@ -114,6 +122,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	  }
 	  
 	  List apps =appDAO.getAllAppsByProcess(app.getProcessId());
+	  //sort by sequence
+	  apps.sort(new Comparator<WtsAppTab>() {
+			@Override
+			public int compare(WtsAppTab o1, WtsAppTab o2) {
+				return o1.getSequence() - o2.getSequence();
+			}
+		});
+	  
 	  //start Change case
 	  if(startDiff>0) {
 //	  Timestamp start= new Timestamp(StartDiff);
@@ -126,12 +142,12 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				  if(et==null) {
 					  et= new WtsNewEtaTab();
 				  }
-				  Timestamp startApp= nextApp.getStartTime();
-				  Timestamp endDtTime= nextApp.getEndTime();
-				  Long newStartL= startDiff+startApp.getTime();
-				  Timestamp newStart= new Timestamp(newStartL);
+				  Timestamp startappTime= nextApp.getStartTime();
+				  Timestamp endDtTime= nextApp.getEndTime(); 
 				  Long newEndL= startDiff+endDtTime.getTime();
 				  Timestamp newEnd= new Timestamp(newEndL);
+				  Long newStartL= startDiff+startappTime.getTime();
+				  Timestamp newStart= new Timestamp(newStartL);
 				  et.setNewEtaEndTransaction(newEnd);  
 				  et.setNewEtaStartTransaction(newStart); 
 				  et.setApplicationId(nextApp.getApplicationId());
@@ -144,11 +160,9 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				  if(et==null) {
 					  et= new WtsNewEtaTab();
 				  }
-				  Timestamp startApp= nextApp.getStartTime();
-				  Timestamp endDtTime= nextApp.getEndTime();
-				  Long newStartL= startDiff+startApp.getTime();
+				  Long newStartL= fileStart.getTime();
 				  Timestamp newStart= new Timestamp(newStartL);
-				  Long newEndL= startDiff+endDtTime.getTime();
+				  Long newEndL= origDiff+newStartL;
 				  Timestamp newEnd= new Timestamp(newEndL);
 				  endProcessTime=  new Timestamp(startDiff+endProcessTime.getTime());
 				  et.setNewEtaEndTransaction(newEnd);  
@@ -268,7 +282,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
   
   
   private WtsNewEtaTab getTdyETATxnByProcessId(int processId, String treatmentDate) {
-	  String hql="from WtsNewEtaTab WHERE processId=?  AND eventDate= ?";
+	  String hql="from WtsNewEtaTab WHERE processId=?  AND eventDate= ? and applicationId=0";
 		Query qry=entityManager.createQuery(hql);
 		qry.setParameter(1,processId);
 		qry.setParameter(2,treatmentDate);
