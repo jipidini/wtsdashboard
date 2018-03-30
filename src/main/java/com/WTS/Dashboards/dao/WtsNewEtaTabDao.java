@@ -200,7 +200,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			}
 		  }
 		  
-	  }else if(endDiff>0) {
+	  }
+	  if(endDiff>0) {
 		  System.out.println("in end DIFF");
 			 Iterator<WtsAppTab> apIt=apps.iterator();
 			  while(apIt.hasNext()){

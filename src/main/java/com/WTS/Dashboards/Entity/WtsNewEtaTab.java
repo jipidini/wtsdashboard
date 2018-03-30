@@ -30,10 +30,10 @@ public class WtsNewEtaTab implements Serializable {
 	@Column(name="application_id")
 	private int applicationId;
 	@Column(name="new_eta_start_transaction")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+	 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private Timestamp newEtaStartTransaction;
 	@Column(name="new_eta_end_transaction")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+	 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private Timestamp newEtaEndTransaction;
 	@Column(name="each_problem_flag")
 	private int problemFlag;

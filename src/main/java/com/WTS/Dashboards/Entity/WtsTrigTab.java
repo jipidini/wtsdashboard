@@ -22,10 +22,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 		@Column(name="trig_id")
 	    private int trigId;  
 		@Column(name="expected_start_time")
-		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		private Timestamp expectedStartTime;
 		@Column(name="expected_end_time")
-		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		private Timestamp expectedEndTime;
 		@Column(name="host")
 		private String host;
@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 		@Column(name="trigger_file_path")
 		private String triggerFilePath;
 		@Column(name="last_update_time")
-		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		private Timestamp lastUpdateTime;
 		@Column(name="comments")
 		private String comments;

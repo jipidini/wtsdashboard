@@ -45,8 +45,10 @@ public class WtsAppTab implements Serializable {
                 @Column(name="transaction_id")
                 private WtsTransTab transactionId;
                 @Column(name="last_update_time")
+                @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
                 private Timestamp lastUpdateTime;
                 @Column(name="enable_flag")
+                
                 private int enableFlag;
                 @Column(name="buffer_minute_time")
                 private int bufferTime;
@@ -58,11 +60,11 @@ public class WtsAppTab implements Serializable {
                 
                 
                 @Column(name="start_time")
-                @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+                @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
                 private Timestamp startTime;
                 
                 @Column(name="end_time")
-                @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+                @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
                 private Timestamp endTime;
                 
                 @ManyToOne(fetch=FetchType.EAGER)

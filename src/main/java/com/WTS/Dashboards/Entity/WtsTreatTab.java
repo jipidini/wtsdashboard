@@ -19,7 +19,7 @@ public class WtsTreatTab implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@Id
 	@Column(name="treatment_date")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+	 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private Date treatmentDate;
 	
 	public Date getTreatmentDate() {

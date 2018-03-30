@@ -37,7 +37,7 @@ public class WtsBatchTab implements Serializable {
 	private int weight;
 	@Column(name="comments")
 	private String comments;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+	 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	@Column(name="last_update_time")
 	private Timestamp lastUpdateTime;
 	@Column(name="enable_flag")
