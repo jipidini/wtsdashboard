@@ -3,14 +3,11 @@ package com.WTS.Dashboards.dao;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -22,7 +19,7 @@ import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
 import com.WTS.Dashboards.Entity.WtsProcessTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
-import com.WTS.Dashboards.Utility.DateUtility;
+import com.WTS.Dashboards.Service.EmailService;
 import com.WTS.Dashboards.Utility.FileCreationTime;
 import com.WTS.Dashboards.Utility.TreatmentDate;
 
@@ -39,6 +36,9 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	
 	@Autowired
 	private WtsProcessTabDao processDAO;
+	
+	@Autowired
+    private EmailService emailService;
 	
 	public WtsNewEtaTab getEtaById(int newEtaId) {
 		return entityManager.find(WtsNewEtaTab.class, newEtaId);
@@ -155,6 +155,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				  et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 				  et.setProblemFlag(0);
 				  etaLst.add(et);
+				 // emailService.SendMailAlertNewEta(nextApp.getEmailId());
+				  
 			  }else if(nextApp.getSequence()==currentSeq) {
 				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
 				  if(et==null) {
@@ -172,6 +174,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				  et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 				  et.setProblemFlag(1);
 				  etaLst.add(et);
+				
 			  }
 			 
 			 
@@ -207,13 +210,13 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			  while(apIt.hasNext()){
 				  WtsAppTab nextApp = (WtsAppTab) apIt.next();
 				  if(nextApp.getSequence()>currentSeq) {
-					  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(app.getApplicationId(), app.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+					  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
 					  if(et==null) {
 						  et= new WtsNewEtaTab();
 					  }
 					  
 					  Timestamp startApp= nextApp.getStartTime();
-					  Timestamp endDtTime= app.getEndTime();
+					  Timestamp endDtTime= nextApp.getEndTime();
 					  Long newStartL= endDiff+startApp.getTime();
 					  Timestamp newStart= new Timestamp(newStartL);
 					  Long newEndL= endDiff+endDtTime.getTime();
@@ -225,14 +228,16 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					  et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 					  et.setProblemFlag(0);
 					  etaLst.add(et);
-				  }else if(nextApp.getSequence()==currentSeq) {
-					  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(app.getApplicationId(), app.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+					  
+				  }
+				  else if(nextApp.getSequence()==currentSeq) {
+					  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
 					  if(et==null) {
 						  et= new WtsNewEtaTab();
 					  }
 					  Timestamp startApp= nextApp.getStartTime();
-					  Timestamp endDtTime= app.getEndTime();
-					  Long newStartL= startApp.getTime();
+					  Timestamp endDtTime= nextApp.getEndTime();
+					  Long newStartL= fileStart.getTime();
 					  Timestamp newStart= new Timestamp(newStartL);
 					  Long newEndL= endDiff+endDtTime.getTime();
 					  Timestamp newEnd= new Timestamp(newEndL);
@@ -388,5 +393,32 @@ public WtsNewEtaTab getTdyETATxnByProcessIdAppID(int appId,int processid, String
   public List<WtsNewEtaTab> getAllEta() {
 		String hql = "FROM WtsNewEtaTab as et ORDER BY et.applicationId";
 		return (List<WtsNewEtaTab>) entityManager.createQuery(hql).getResultList();
-	}	
+	}
+  
+  public List<WtsNewEtaTab> getAllCurrentEta() {
+		String hql = "FROM WtsNewEtaTab where eventDate=?";
+		return (List<WtsNewEtaTab>) entityManager.createQuery(hql).setParameter(1, TreatmentDate.getInstance().getTreatmentDate()).getResultList();
+	}
+  
+  /*public void EtaMail(){
+	  List<WtsNewEtaTab> eta= this.getAllCurrentEta();
+	   if(eta!=null){
+		   			Iterator<WtsNewEtaTab> etaItr=eta.iterator();
+		   				while(etaItr.hasNext()){
+		   					WtsNewEtaTab et=etaItr.next();
+		   						if(et.getApplicationId()>0){
+		   							WtsAppTab app= appDAO.getAppById(et.getApplicationId());
+		   								if(app!=null){
+		   									WtsTransTab tr= getTdyTxnByProcessIdAppId(app.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),app.getApplicationId());
+		   									if(tr.getSendetaemailflag()==0){
+		   										emailService.SendMailAlertNewEta(app.getEmailId());
+		   										tr.setSendetaemailflag(1);
+		   													}
+		   											}
+				   
+		   								}
+		   					}
+	  
+	   				}
+  }*/
 }

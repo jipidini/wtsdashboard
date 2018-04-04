@@ -117,7 +117,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 
 	/*
 	public boolean transactionExists(int transactionId) {
-		System.out.println("Why this why this ");
+		System.out.println("transaction Exists ");
 		
 		String hql = "FROM WtsTransTab as trans WHERE trans.transaction_id= ? ";
 		int count = entityManager.createQuery(hql).setParameter(1, transactionId).getResultList().size();
@@ -246,8 +246,14 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		  
 		  int status=getFileStatus(startModDTTime,endModDtTime,name);
 		  WtsTransTab existtrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),appln.getApplicationId());
-			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && (status ==WtsTransTabController.STATUS_IN_PROGRESS || status ==WtsTransTabController.STATUS_DELAYED || status ==WtsTransTabController.STATUS_SUCCESS)) {
+			 if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && (status ==WtsTransTabController.STATUS_IN_PROGRESS || status ==WtsTransTabController.STATUS_DELAYED || status== WtsTransTabController.STATUS_FAILURE )) {
+				 
+				 //UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
+				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true);
 				
+			 }
+			 else  if(existtrans!=null && existtrans.getStatusId()== WtsTransTabController.STATUS_FAILURE && (status ==WtsTransTabController.STATUS_SUCCESS )) {
+				 if(FileCreationTime.getStartfileCreationTime(name)!=null && (FileCreationTime.getEndfileCreationTime(name)!=null) && (FileCreationTime.endTimestamp(name).after(endModDtTime)) )
 				 //UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
 				 this.updateNewETA(transa.getProcessId(),existtrans.getApplicationId(),true);
 			 }
@@ -265,46 +271,68 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 				   System.out.println("start file set time" +new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getEndfileCreationTime(name)));
 			}
 		   if(status==WtsTransTabController.STATUS_FAILURE){
-			   if(trans.getSendemailflag()==0)
-               {
-					//emailService.sendMailRedAlert(appln.getEmailId());
-//				   emailService.sendREDalertSMS(appln.getSupportContact());
-					trans.setSendemailflag(1);
-					}
+			 
                List <WtsAppTab> apps=appDAO.getAllAppsByProcess(transa.getProcessId());
                if(apps!=null) {
                                             Iterator<WtsAppTab> appssItr=apps.iterator();
                                             while (appssItr.hasNext()) {
                                                             WtsAppTab app = (WtsAppTab) appssItr.next();
-               if(FileCreationTime.getFailfileCreationTime(name)!=null)
-                                            transa.setEndTransaction(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(FileCreationTime.getFailfileCreationTime(name)));
-//                            emailService.sendMailRedAlert(app.getEmailId());
-//               emailService.sendREDalertSMS(appln.getSupportContact());
-               
-
-                                            }
+             
+               if(trans.getSendemailflag()==0)
+               {             
+               emailService.sendMailRedAlert(app.getEmailId());
+               emailService.sendREDalertSMS(appln.getSupportContact());
+               trans.setSendemailflag(1);
+               }
+              
                }                           
 }
-
-		  /* boolean isprevRed=false;
-		   List <WtsAppTab> apps=appDAO.getAllAppsByProcess(transa.getProcessId());
+		   }
+		  /* boolean isprevRed=false;*/
+		  /* List <WtsAppTab> apps=appDAO.getAllAppsByProcess(transa.getProcessId());
 		   if(apps!=null) {
 				 Iterator<WtsAppTab> appssItr=apps.iterator();
 				 while (appssItr.hasNext()) {
 					 WtsAppTab app = (WtsAppTab) appssItr.next();
-					 if(app.getSequence()<curSeq) {
+					 if(app.getSequence()>curSeq) {
 						 WtsTransTab apptrans= getTdyTxnByProcessIdAppId(transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),app.getApplicationId());
 						 if(apptrans!=null && apptrans.getStatusId()== WtsTransTabController.STATUS_FAILURE) {
-							 transa.setStatusId(WtsTransTabController.STATUS_DELAYED);
+							// transa.setStatusId(WtsTransTabController.STATUS_DELAYED);
 							 //should be replaced with real reporting configured emails for the app in place of hardcoded values
 //							 new EmailUtil().sendSimpleMessage("behera.deb@gmail.com", "Application-"+app.getName()+"-STATUS RED!", "Process: "+processDAO.getProcessById(transa.getProcessId()).getName()
 //									 + " Application:- "+app.getName()+" STATUS RED!!");
 //                             emailService.sendMailRedAlert(app.getEmailId());
-						 
+							 if(transa.getSendetaemailflag()==0)
+				               {
+//				            	  
+				            emailService.SendMailAlertNewEta(app.getEmailId());
+				               transa.setSendetaemailflag(1);;
+				               }
 						 }
 					 }
 				 }
 		   }*/
+		  
+		   
+		  /* List<WtsNewEtaTab> eta= etDAO.getAllCurrentEta();
+		   if(eta!=null){
+			   			Iterator<WtsNewEtaTab> etaItr=eta.iterator();
+			   				while(etaItr.hasNext()){
+			   					WtsNewEtaTab etr=etaItr.next();
+			   						if(etr.getApplicationId()>0){
+			   							WtsAppTab app= appDAO.getAppById(et.getApplicationId());
+			   								if(app!=null){
+			   									WtsTransTab tr= getTdyTxnByProcessIdAppId(app.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),app.getApplicationId());
+			   									if(tr.getSendetaemailflag()==0){
+			   										emailService.SendMailAlertNewEta(app.getEmailId());
+			   										tr.setSendetaemailflag(1);
+			   													}
+			   											}
+					   
+			   								}
+			   					}
+		  
+		   				}*/
 		   
 		   //PROCESS
 	   } else if(transa.getApplicationId()==0) {
@@ -349,17 +377,21 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 							  }
 							 status=getFileStatus(startModDTTime,endModDtTime,name);
 							 WtsTransTab appTxn= this.getTransactionByAppIdProId(endAppID, transa.getProcessId(),TreatmentDate.getInstance().getTreatmentDate());
-							 if(appTxn!=null)
+							 if(appTxn!=null){
 							 transa.setEndTransaction(appTxn.getEndTransaction());
-                             if(transa.getSendemailflag()==0)
-                             {
-                           //  emailService.SendMailAlertNewEta(wtsAppTab.getEmailId());
-                             transa.setSendemailflag(1);;
-                             }
+							 }
+							 
+                           
 
-							// emailService.SendMailAlertNewEta(wtsAppTab.getEmailId());
-							 transa.setSendemailflag(1);;
+						
 						}
+						/*DAY   
+						 WtsProcessTab process= getProcessById(wtsAppTab.getProcessId())
+						if(transa.getendTransaction == process.getEndTime)
+						transa.setDayFlag=1; 
+						else 
+						transa.setdayFlag=2;
+				*/
 						
 					}
 				 }
@@ -369,11 +401,32 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 				 transa.setStatusId(status);
 				 
 		   }
-	  
+	   
+	 
 	   
 	   entityManager.flush();
+	   
+	   /*List<WtsNewEtaTab> eta= etDAO.getAllCurrentEta();
+	   if(eta!=null){
+		   			Iterator<WtsNewEtaTab> etaItr=eta.iterator();
+		   				while(etaItr.hasNext()){
+		   					WtsNewEtaTab et=etaItr.next();
+		   						if(et.getApplicationId()>0){
+		   							WtsAppTab app= appDAO.getAppById(et.getApplicationId());
+		   								if(app!=null){
+		   									WtsTransTab tr= getTdyTxnByProcessIdAppId(app.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),app.getApplicationId());
+		   									if(tr.getSendetaemailflag()==0){
+		   										emailService.SendMailAlertNewEta(app.getEmailId());
+		   										tr.setSendetaemailflag(1);
+		   													}
+		   											}
+				   
+		   								}
+		   					}
+	  
+	   				} */
 	
-   }
+   			}
    
    
    
@@ -475,4 +528,29 @@ public List<WtsTransTab> getFlowData(int applicationId) {
 		return current;
 		
 	}
+	
+	public void EtaMail(){
+		  List<WtsNewEtaTab> eta= etDAO.getAllCurrentEta();
+		   if(eta!=null){
+			   			Iterator<WtsNewEtaTab> etaItr=eta.iterator();
+			   				while(etaItr.hasNext()){
+			   					WtsNewEtaTab et=etaItr.next();
+			   						if(et.getApplicationId()>0){
+			   							WtsAppTab app= appDAO.getAppById(et.getApplicationId());
+			   								if(app!=null){
+			   									WtsTransTab tr= getTdyTxnByProcessIdAppId(app.getProcessId(),TreatmentDate.getInstance().getTreatmentDate(),app.getApplicationId());
+			   									if(tr!=null){
+			   									if(tr.getSendetaemailflag()==0){
+			   										emailService.SendMailAlertNewEta(app.getEmailId());
+			   										tr.setSendetaemailflag(1);
+			   													}
+			   									}
+			   											}
+					   
+			   								}
+			   					}
+		  
+		   				}
+		   System.out.println("new eta mail sent........");
+	  }
 }

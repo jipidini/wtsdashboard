@@ -9,10 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.WTS.Dashboards.Entity.WtsAppTab;
+import com.WTS.Dashboards.Entity.WtsNewEtaTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
 import com.WTS.Dashboards.Utility.DateUtility;
 import com.WTS.Dashboards.Utility.TreatmentDate;
 import com.WTS.Dashboards.dao.WtsAppTabDao;
+import com.WTS.Dashboards.dao.WtsNewEtaTabDao;
 import com.WTS.Dashboards.dao.WtsTransTabDao;
 
 @Service
@@ -25,6 +27,12 @@ public class WtsTransTabService implements IWtsServiceInterface {
 	
 	@Autowired
 	private WtsAppTabDao appDAO;
+	
+	@Autowired
+	private WtsNewEtaTabDao etDAO; 
+	
+	@Autowired
+    private EmailService emailService;
 	
 	public List<WtsTransTab> getAlltransaction() {
 		return tranDao.getAlltransaction();
@@ -100,6 +108,7 @@ public class WtsTransTabService implements IWtsServiceInterface {
 		 
 		 
 		 }
+		
 	 return finalList;
 	}
 	
@@ -175,5 +184,9 @@ public synchronized boolean addProcessTransaction(WtsTransTab trans) {
 		// TODO Auto-generated method stub
 		WtsTransTab trs=tranDao.getTransactionById((int)object);
 		return null;
+	}
+	
+	public void EtaMail(){
+		tranDao.EtaMail();
 	}
 }

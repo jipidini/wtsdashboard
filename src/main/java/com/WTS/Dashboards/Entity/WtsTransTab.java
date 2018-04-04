@@ -57,6 +57,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		
 		 @Column(name="sendemailflag")
          private int sendemailflag;
+		 
+		 @Column(name="sendetaemailflag")
+         private int sendetaemailflag;
 		
 		//@OneToMany(fetch = FetchType.EAGER, mappedBy = "WtsTransTab")
 		
@@ -146,5 +149,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public void setSendemailflag(int sendemailflag) {
             this.sendemailflag = sendemailflag;
 }
+public int getSendetaemailflag() {
+	return sendetaemailflag;
+}
+public void setSendetaemailflag(int sendetaemailflag) {
+	this.sendetaemailflag = sendetaemailflag;
+}
+
+
 	}
 
