@@ -82,6 +82,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
   }
   
   
+  
   public void newEtaCalculation(WtsAppTab app , int processId) throws ParseException {
 	  System.out.println("start time loop entered");
 	  String name= app.getName();
@@ -299,6 +300,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				
 }
 
+  
+  public void updateGreenDay(int processId, String treatmentDate) {
+	  String hql="UPDATE WtsNewEtaTab SET problemFlag= 0 WHERE processId=?  AND eventDate= ? and applicationId=0";
+		Query qry=entityManager.createQuery(hql);
+		qry.setParameter(1,processId);
+		qry.setParameter(2,treatmentDate);
+		qry.executeUpdate();
+}
 
 public WtsNewEtaTab getTdyETATxnByProcessIdAppID(int appId,int processid, String treatDt)
 	{

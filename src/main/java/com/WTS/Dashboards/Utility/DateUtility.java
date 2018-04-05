@@ -37,6 +37,31 @@ public class DateUtility {
 		 
 	}
 	
+	public static boolean isAfterOrSame(Timestamp expTime, Date actuleTime) {
+		String starttime = new SimpleDateFormat("HH:mm:ss").format(expTime);
+		 
+		  String startTimeParse[] = starttime.split(":");
+
+		  int firstHour = Integer.parseInt(startTimeParse[0]);
+		  int firstMinute = Integer.parseInt(startTimeParse[1]);
+		  int firstSec = Integer.parseInt(startTimeParse[2]);
+		  
+		  Calendar calexp=Calendar.getInstance();
+		  calexp.set(Calendar.HOUR_OF_DAY, firstHour);
+		  calexp.set(Calendar.MINUTE, firstMinute);
+		  calexp.set(Calendar.SECOND, firstSec);
+		
+		  Calendar calActual=Calendar.getInstance();
+		  
+		  calActual.setTime(actuleTime);
+		  if(calexp.getTimeInMillis() >= calActual.getTimeInMillis()) {
+			return true;
+		  }else {
+			  return false;
+		  }
+		 
+	}
+	
 	public static Date getNewStartETA(Date oldStartDTTime, Date newStartDTTime, Date oldEndDtTime) {
 		Date newStartETA=null;
 		return newStartETA;
