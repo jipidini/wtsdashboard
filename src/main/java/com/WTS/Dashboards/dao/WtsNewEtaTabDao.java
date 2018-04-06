@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
+import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 import com.WTS.Dashboards.Entity.WtsProcessTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
 import com.WTS.Dashboards.Service.EmailService;
@@ -39,6 +40,12 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	
 	@Autowired
     private EmailService emailService;
+	
+	@Autowired
+	private WtsProcessAppMapTabDao proAppMapDao;
+	
+	@Autowired
+	private WtsAppMappingTabDao appMapDao;
 	
 	public WtsNewEtaTab getEtaById(int newEtaId) {
 		return entityManager.find(WtsNewEtaTab.class, newEtaId);
@@ -87,11 +94,21 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	  System.out.println("start time loop entered");
 	  String name= app.getName();
 	  int apId=app.getApplicationId();
-	  int currentSeq=app.getSequence();
+	 
 	 List<WtsNewEtaTab> etaLst= new ArrayList<>();
-	  Timestamp startDTTime=app.getStartTime();
-	  Timestamp endDTTime=app.getEndTime();
-	  int buf=app.getBufferTime();
+	 Timestamp startDTTime=null;
+	 Timestamp endDTTime=null;
+	 int buf=0;
+	 int currentSeq=0;
+			WtsProcessAppMapTab proMap=proAppMapDao.getAllAppMappingsByProcess(processId, apId);
+			if(proMap!=null) {
+				 startDTTime=proMap.getStartTime();
+				  endDTTime=proMap.getEndTime();
+				  buf=proMap.getBufferTime();
+				  currentSeq=proMap.getSequence();
+			}
+
+	 
 	  Long origDiff=Long.valueOf(0);
 	  origDiff=endDTTime.getTime()-startDTTime.getTime();
 	  
@@ -122,14 +139,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		  endProcessTime=processObj.getExpectedEndTime();
 	  }
 	  
-	  List apps =appDAO.getAllAppsByProcess(app.getProcessId());
-	  //sort by sequence
-	  apps.sort(new Comparator<WtsAppTab>() {
-			@Override
-			public int compare(WtsAppTab o1, WtsAppTab o2) {
-				return o1.getSequence() - o2.getSequence();
-			}
-		});
+	  List apps =appDAO.getAllAppsByProcess(processId);
+	
 	  
 	  //start Change case
 	  if(startDiff>0) {
@@ -138,13 +149,22 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		 Iterator<WtsAppTab> apItr=apps.iterator();
 		  while(apItr.hasNext()){
 			  WtsAppTab nextApp = (WtsAppTab) apItr.next();
-			  if(nextApp.getSequence()>currentSeq) {
-				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+			  WtsProcessAppMapTab proNxtMap=proAppMapDao.getAllAppMappingsByProcess(processId, nextApp.getApplicationId());
+			  int nextAppSeq=0;
+			  Timestamp startappTime= null;
+			  Timestamp endDtTime=null;
+				if(proNxtMap!=null) {
+					startappTime=proNxtMap.getStartTime();
+					endDtTime=proNxtMap.getEndTime();
+					  buf=proNxtMap.getBufferTime();
+					  nextAppSeq=proNxtMap.getSequence();
+				}
+			  if(nextAppSeq>currentSeq) {
+				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), processId, TreatmentDate.getInstance().getTreatmentDate());
 				  if(et==null) {
 					  et= new WtsNewEtaTab();
 				  }
-				  Timestamp startappTime= nextApp.getStartTime();
-				  Timestamp endDtTime= nextApp.getEndTime(); 
+				 
 				  Long newEndL= startDiff+endDtTime.getTime();
 				  Timestamp newEnd= new Timestamp(newEndL);
 				  Long newStartL= startDiff+startappTime.getTime();
@@ -158,8 +178,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				  etaLst.add(et);
 				 // emailService.SendMailAlertNewEta(nextApp.getEmailId());
 				  
-			  }else if(nextApp.getSequence()==currentSeq) {
-				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+			  }else if(nextAppSeq==currentSeq) {
+				  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), processId, TreatmentDate.getInstance().getTreatmentDate());
 				  if(et==null) {
 					  et= new WtsNewEtaTab();
 				  }
@@ -210,14 +230,23 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			 Iterator<WtsAppTab> apIt=apps.iterator();
 			  while(apIt.hasNext()){
 				  WtsAppTab nextApp = (WtsAppTab) apIt.next();
-				  if(nextApp.getSequence()>currentSeq) {
-					  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+				  WtsProcessAppMapTab proNxtMap=proAppMapDao.getAllAppMappingsByProcess(processId, nextApp.getApplicationId());
+				  int nextAppSeq=0;
+				  Timestamp startApp= null;
+				  Timestamp endDtTime=null;
+					if(proNxtMap!=null) {
+						startApp=proNxtMap.getStartTime();
+						endDtTime=proNxtMap.getEndTime();
+						  buf=proNxtMap.getBufferTime();
+						  nextAppSeq=proNxtMap.getSequence();
+					}
+				  if(nextAppSeq>currentSeq) {
+					  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), processId, TreatmentDate.getInstance().getTreatmentDate());
 					  if(et==null) {
 						  et= new WtsNewEtaTab();
 					  }
 					  
-					  Timestamp startApp= nextApp.getStartTime();
-					  Timestamp endDtTime= nextApp.getEndTime();
+					 
 					  Long newStartL= endDiff+startApp.getTime();
 					  Timestamp newStart= new Timestamp(newStartL);
 					  Long newEndL= endDiff+endDtTime.getTime();
@@ -231,13 +260,12 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					  etaLst.add(et);
 					  
 				  }
-				  else if(nextApp.getSequence()==currentSeq) {
-					  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+				  else if(nextAppSeq==currentSeq) {
+					  WtsNewEtaTab et=getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), processId, TreatmentDate.getInstance().getTreatmentDate());
 					  if(et==null) {
 						  et= new WtsNewEtaTab();
 					  }
-					  Timestamp startApp= nextApp.getStartTime();
-					  Timestamp endDtTime= nextApp.getEndTime();
+					
 					  Long newStartL= fileStart.getTime();
 					  Timestamp newStart= new Timestamp(newStartL);
 					  Long newEndL= endDiff+endDtTime.getTime();
@@ -379,16 +407,14 @@ public WtsNewEtaTab getTdyETATxnByProcessIdAppID(int appId,int processid, String
 		  eta.setNewEtaStartTransaction(etS.getNewEtaStartTransaction());
 	  }
 	  else{
-		  WtsAppTab app=appDAO.getAppById(fApp);
-		  eta.setNewEtaEndTransaction(app.getStartTime());
+		  eta.setNewEtaEndTransaction(proAppMapDao.getAppMappingStartTime(processId, fApp));
 	  }
 	  
 	  if(etE!=null){
 		  eta.setNewEtaEndTransaction(etS.getNewEtaEndTransaction());
 	  }
 	  else{
-		  WtsAppTab app=appDAO.getAppById(lApp);
-		  eta.setNewEtaEndTransaction(app.getEndTime());
+		  eta.setNewEtaEndTransaction(proAppMapDao.getAppMappingEndTime(processId, lApp));
 	  }
 	  
 	  eta.setProcessId(processId);

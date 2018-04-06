@@ -36,8 +36,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 	    private int transactionId;  
 		@Column(name="process_id",nullable = false)
 	    private Integer processId;  
-		@Column(name="batch_id",nullable = false)
-	    private Integer batchId;  
+		@Column(name="app_mapping_id",nullable = false)
+	    private Integer appMappingId;  
 		@Column(name="application_id",nullable = false)
 	    private Integer applicationId; 
 
@@ -103,19 +103,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		public static long getSerialversionuid() {
 			return serialVersionUID;
 		}
-		public int getBatchId() {
-			if(batchId==null){
+		
+		
+		public Integer getAppMappingId() {
+			if(appMappingId==null){
 				return 0;
 			}else
-			return batchId;
+			return appMappingId;
 		}
-		public void setBatchId(int batchId) {
-			if(batchId==0){
-				this.batchId = null;
+		public void setAppMappingId(Integer appMappingId) {
+			if(appMappingId==0){
+				this.appMappingId = null;
 			}else
-			this.batchId = batchId;
+			this.appMappingId = appMappingId;
 		}
-		
 		public String getEventDate() {
 			return eventDate;
 		}

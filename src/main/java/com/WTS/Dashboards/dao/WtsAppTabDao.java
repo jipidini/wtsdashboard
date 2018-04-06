@@ -1,15 +1,21 @@
 
 package com.WTS.Dashboards.dao;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.WTS.Dashboards.DTO.Application;
+import com.WTS.Dashboards.Entity.WtsAppMappingTab;
 import com.WTS.Dashboards.Entity.WtsAppTab;
+import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
 
 @Transactional
@@ -17,6 +23,10 @@ import com.WTS.Dashboards.Entity.WtsTransTab;
 public class WtsAppTabDao implements IWtsDaoInterface{
 	@PersistenceContext	
 	private EntityManager entityManager;
+	@Autowired
+	private WtsProcessAppMapTabDao appProcMapDao;
+	@Autowired
+	private WtsAppMappingTabDao appMapDao;
 	
 	
 	public WtsAppTab getAppById(int applicationId) {
@@ -30,23 +40,82 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 	}	
 
 	public List<WtsAppTab> getAllAppsByProcess(int processId) {
-		 System.out.println("processId"+processId);
-		   String hql="FROM WtsAppTab as app WHERE app.processId=:proc";
-		   
-		 List <WtsAppTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).getResultList();
+		List<WtsAppTab> result=null;
+			   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc";
+			   
+			 List <WtsProcessAppMapTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).getResultList();
+			 if(ls!=null && !ls.isEmpty()) {
+				 result= new ArrayList<>();
+				 Iterator<WtsProcessAppMapTab> mappItr=ls.iterator();
+				 while (mappItr.hasNext()) {
+					WtsProcessAppMapTab wtsProcessAppMapTab = (WtsProcessAppMapTab) mappItr.next();
+					result.add(this.getAppById(wtsProcessAppMapTab.getApplicationId()));
+				}
+			 }
 		  
-	   return ls;
+	   return result;
 	}
 	
 	public void addApp(WtsAppTab application) {
 		entityManager.persist(application);
 	}
+	 public Application convertApplicationDTOforProcess(WtsAppTab application, int processId) {
+		 Application appDTO=null;
+		 if(application!=null) {
+			 appDTO= new Application();
+			 appDTO.setApplicationId(application.getApplicationId());
+			 appDTO.setName(application.getName());
+			 if(processId>0)
+			 appDTO.setProcessId(processId);
+			 appDTO.setComments(application.getComments());
+			 WtsProcessAppMapTab appMap=appProcMapDao.getAllAppMappingsByProcess(processId,application.getApplicationId());
+			 if(appMap!=null) {
+				 appDTO.setSequence(appMap.getSequence());
+				 appDTO.setTrigId(appMap.getTrigId());
+				 appDTO.setTrigId(appMap.getTrigId());
+				 appDTO.setWeight(appMap.getWeight());
+				 appDTO.setBufferTime(appMap.getBufferTime());
+				 appDTO.setEmailId(appMap.getEmailId());
+				 appDTO.setSupportContact(appMap.getSupportContact());
+				 appDTO.setStartTime(appMap.getStartTime());
+				 appDTO.setEndTime(appMap.getEndTime());
+			 }
+			 appDTO.setLastUpdateTime(application.getLastUpdateTime());
+			 appDTO.setEnableFlag(application.getEnableFlag());
+			 appDTO.setEta(application.getEta());
+			 appDTO.setTran(application.getTran());
+		 }
+		 return appDTO;
+	 }
 	
-	
+	 public Application convertApplicationDTO(int parentId, WtsAppTab child) {
+		 Application appDTO=null;
+		 if(child!=null) {
+			 appDTO= new Application();
+			 appDTO.setApplicationId(child.getApplicationId());
+			 appDTO.setName(child.getName());
+			 appDTO.setComments(child.getComments());
+			 WtsAppMappingTab appMap=appMapDao.getAllAppMappingsByParent(parentId,child.getApplicationId());
+			 if(appMap!=null) {
+				 appDTO.setSequence(appMap.getSequence());
+				 appDTO.setTrigId(appMap.getTrigId());
+				 appDTO.setWeight(appMap.getWeight());
+				 appDTO.setBufferTime(appMap.getBufferTime());
+				 appDTO.setEmailId(appMap.getEmailId());
+				 appDTO.setSupportContact(appMap.getSupportContact());
+				 appDTO.setStartTime(appMap.getStartTime());
+				 appDTO.setEndTime(appMap.getEndTime());
+			 }
+			 appDTO.setLastUpdateTime(child.getLastUpdateTime());
+			 appDTO.setEnableFlag(child.getEnableFlag());
+			 appDTO.setEta(child.getEta());
+		 }
+		 return appDTO;
+	 }
+	 
 	public void updateApp(WtsAppTab application) {
 		WtsAppTab app = getAppById(application.getApplicationId());
 		app.setComments(application.getComments());
-		app.setWeight(application.getWeight());
 		entityManager.flush();
 	}
 	
@@ -62,9 +131,9 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 //	}
 //		
 	
-	public boolean appExists(int processId, int applicationId, Timestamp time ){
-	String hql= "FROM WtsAppTab as app WHERE app.process_id=? and app.application_id = ? and app.last_updated_time=?";
-	int cnt = entityManager.createQuery(hql).setParameter(1,processId ).setParameter(2, applicationId).setParameter(3, time).getResultList().size();
+	public boolean appExists(int applicationId, Timestamp time ){
+	String hql= "FROM WtsAppTab as app WHERE app.application_id = ? and app.last_updated_time=?";
+	int cnt = entityManager.createQuery(hql).setParameter(1, applicationId).setParameter(1, time).getResultList().size();
 	return cnt > 0 ? true : false;
 	}
 	

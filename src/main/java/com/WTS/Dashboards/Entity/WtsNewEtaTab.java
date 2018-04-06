@@ -25,8 +25,8 @@ public class WtsNewEtaTab implements Serializable {
 	private String eventDate;
 	@Column(name="process_id")
 	private int processId;
-	@Column(name="batch_id")
-	private int batchId;
+	@Column(name="app_mapping_id")
+	private int appMappingId;
 	@Column(name="application_id")
 	private int applicationId;
 	@Column(name="new_eta_start_transaction")
@@ -56,11 +56,12 @@ public class WtsNewEtaTab implements Serializable {
 	public void setProcessId(int processId) {
 		this.processId = processId;
 	}
-	public int getBatchId() {
-		return batchId;
+	
+	public int getAppMappingId() {
+		return appMappingId;
 	}
-	public void setBatchId(int batchId) {
-		this.batchId = batchId;
+	public void setAppMappingId(int appMappingId) {
+		this.appMappingId = appMappingId;
 	}
 	public int getApplicationId() {
 		return applicationId;

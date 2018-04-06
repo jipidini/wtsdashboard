@@ -70,7 +70,7 @@ public class WtsTransTabController {
 		
 		List  finalList=trs.fetchAllTxns(processId);
 		finalList.addAll(etaDAO.getAllEta());
-	 trs.EtaMail();
+	 trs.EtaMail(processId);
 	 return new ResponseEntity<List <WtsTransTab>>(finalList,HttpStatus.OK);
 		
 	}

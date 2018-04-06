@@ -15,6 +15,7 @@ import com.WTS.Dashboards.Utility.DateUtility;
 import com.WTS.Dashboards.Utility.TreatmentDate;
 import com.WTS.Dashboards.dao.WtsAppTabDao;
 import com.WTS.Dashboards.dao.WtsNewEtaTabDao;
+import com.WTS.Dashboards.dao.WtsProcessAppMapTabDao;
 import com.WTS.Dashboards.dao.WtsTransTabDao;
 
 @Service
@@ -33,6 +34,9 @@ public class WtsTransTabService implements IWtsServiceInterface {
 	
 	@Autowired
     private EmailService emailService;
+	
+	@Autowired
+	private WtsProcessAppMapTabDao proAppMapDao;
 	
 	public List<WtsTransTab> getAlltransaction() {
 		return tranDao.getAlltransaction();
@@ -58,7 +62,7 @@ public class WtsTransTabService implements IWtsServiceInterface {
 					 Iterator<WtsAppTab> appssItr=apps.iterator();
 					 while (appssItr.hasNext()) {
 						 WtsAppTab app = (WtsAppTab) appssItr.next();
-						 if(app!=null && DateUtility.isAfterNow(app.getStartTime())) {
+						 if(app!=null && DateUtility.isAfterNow(proAppMapDao.getAppMappingStartTime(processId, app.getApplicationId()))) {
 							 WtsTransTab newAppTrans= new WtsTransTab();
 							 newAppTrans.setProcessId(processId);
 							 newAppTrans.setApplicationId(app.getApplicationId());
@@ -89,7 +93,7 @@ public class WtsTransTabService implements IWtsServiceInterface {
 				 Iterator<WtsAppTab> appssItr=apps.iterator();
 				 while (appssItr.hasNext()) {
 					 WtsAppTab app = (WtsAppTab) appssItr.next();
-					 if(app!=null && DateUtility.isAfterNow(app.getStartTime())) {
+					 if(app!=null && DateUtility.isAfterNow(proAppMapDao.getAppMappingStartTime(processId, app.getApplicationId()))) {
 						 WtsTransTab newAppTrans= new WtsTransTab();
 						 newAppTrans.setProcessId(processId);
 						 newAppTrans.setApplicationId(app.getApplicationId());
@@ -186,7 +190,7 @@ public synchronized boolean addProcessTransaction(WtsTransTab trans) {
 		return null;
 	}
 	
-	public void EtaMail(){
-		tranDao.EtaMail();
+	public void EtaMail(int processId){
+		tranDao.EtaMail(processId);
 	}
 }

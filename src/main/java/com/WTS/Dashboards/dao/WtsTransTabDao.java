@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.WTS.Dashboards.Controller.WtsTransTabController;
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
+import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 import com.WTS.Dashboards.Entity.WtsProcessTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
 import com.WTS.Dashboards.Service.EmailService;
@@ -42,6 +43,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	private WtsNewEtaTabDao etDAO;
 	@Autowired
 	private EmailService emailService;
+	@Autowired
+	private WtsProcessAppMapTabDao proAppMapDao;
 
 	public WtsTransTab getTransactionById(int transactionId) {
 		return entityManager.find(WtsTransTab.class, transactionId);
@@ -117,7 +120,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	 * 0 ? true : false; }
 	 */
 	public WtsTransTab getTdyTxnByProcessId(int processId, String trtDt) {
-		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND application_id IS null and batch_id IS null";
+		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND application_id IS null and app_mapping_id IS null";
 
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processId);
@@ -206,14 +209,18 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		Timestamp startModDTTime = null;
 		Timestamp endModDtTime = null;
 		int bufferTime = 0;
+		int curSeq =0;
 		// APPLICATION
 		if (transa.getApplicationId() > 0) {
 			WtsAppTab appln = appDAO.getAppById(transa.getApplicationId());
-			String name = appln.getName();
-			startDTTime = appln.getStartTime();
-			endDtTime = appln.getEndTime();
-			bufferTime = appln.getBufferTime();
-			int curSeq = appln.getSequence();
+			WtsProcessAppMapTab proMap=proAppMapDao.getAllAppMappingsByProcess(transa.getProcessId(), transa.getApplicationId());
+			if(proMap!=null) {
+				 startDTTime=proMap.getStartTime();
+				 endDtTime=proMap.getEndTime();
+				 bufferTime=proMap.getBufferTime();
+				 curSeq=proMap.getSequence();
+			}
+			
 			/*
 			 * Lokesh start
 			 */
@@ -221,7 +228,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			System.out.println("Endtimefrom database" + endDtTime);
 
 			endModDtTime = DateUtility.addBufferTime(endDtTime, bufferTime);
-			WtsNewEtaTab et = etDAO.getTdyETATxnByProcessIdAppID(appln.getApplicationId(), appln.getProcessId(),
+			WtsNewEtaTab et = etDAO.getTdyETATxnByProcessIdAppID(appln.getApplicationId(), transa.getProcessId(),
 					TreatmentDate.getInstance().getTreatmentDate());
 			if (et != null) {
 				startDTTime = et.getNewEtaStartTransaction();
@@ -231,7 +238,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 
 				endModDtTime = DateUtility.addBufferTime(endDtTime, bufferTime);
 			}
-
+			String name=appln.getName();
 			int status = getFileStatus(startModDTTime, endModDtTime, name);
 			WtsTransTab existtrans = getTdyTxnByProcessIdAppId(transa.getProcessId(),
 					TreatmentDate.getInstance().getTreatmentDate(), appln.getApplicationId());
@@ -274,8 +281,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 						WtsAppTab app = (WtsAppTab) appssItr.next();
 
 						if (trans.getSendemailflag() == 0) {
-							emailService.sendMailRedAlert(app.getEmailId());
-							emailService.sendREDalertSMS(appln.getSupportContact());
+							emailService.sendMailRedAlert(proAppMapDao.getAppMappingEmailId(transa.getProcessId(), app.getApplicationId()));
+							emailService.sendREDalertSMS(proAppMapDao.getAppMappingSupportContact(transa.getProcessId(), app.getApplicationId()));
 							trans.setSendemailflag(1);
 						}
 
@@ -300,7 +307,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 				int mSeq = appDAO.getLastSeq(processObj.getProcessId());
 				while (appssItr.hasNext()) {
 					WtsAppTab wtsAppTab = (WtsAppTab) appssItr.next();
-					if (wtsAppTab.getSequence() == 1) {
+					int appseq=proAppMapDao.getAppMappingSequence(transa.getProcessId(), wtsAppTab.getApplicationId());
+					if (appseq == 1) {
 						startAppID = wtsAppTab.getApplicationId();
 						status = WtsTransTabController.STATUS_IN_PROGRESS;
 						WtsTransTab appTxn = this.getTransactionByAppIdProId(startAppID, processObj.getProcessId(),
@@ -308,19 +316,25 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 						if (appTxn != null)
 							transa.setStartTransaction(appTxn.getStartTransaction());
 					}
-					if (wtsAppTab.getSequence() == mSeq) {
-						seq = wtsAppTab.getSequence();
+					if (appseq == mSeq) {
+						seq = appseq;
 						endAppID = wtsAppTab.getApplicationId();
 						String name = wtsAppTab.getName();
-						startDTTime = wtsAppTab.getStartTime();
-						endDtTime = wtsAppTab.getEndTime();
-						bufferTime = wtsAppTab.getBufferTime();
+						
+						WtsProcessAppMapTab proMap=proAppMapDao.getAllAppMappingsByProcess(transa.getProcessId(), endAppID);
+						if(proMap!=null) {
+							 startDTTime=proMap.getStartTime();
+							 endDtTime=proMap.getEndTime();
+							 bufferTime=proMap.getBufferTime();
+							 
+						}
+						
 						startModDTTime = DateUtility.addBufferTime(startDTTime, bufferTime);
 
 						endModDtTime = DateUtility.addBufferTime(endDtTime, bufferTime);
 
 						WtsNewEtaTab et = etDAO.getTdyETATxnByProcessIdAppID(wtsAppTab.getApplicationId(),
-								wtsAppTab.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+								transa.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
 						if (et != null) {
 							startDTTime = et.getNewEtaStartTransaction();
 							endDtTime = et.getNewEtaEndTransaction();
@@ -445,7 +459,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 
 	}
 
-	public void EtaMail() {
+	public void EtaMail(int processId) {
 		List<WtsNewEtaTab> eta = etDAO.getAllCurrentEta();
 		if (eta != null) {
 			Iterator<WtsNewEtaTab> etaItr = eta.iterator();
@@ -454,11 +468,11 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 				if (et.getApplicationId() > 0) {
 					WtsAppTab app = appDAO.getAppById(et.getApplicationId());
 					if (app != null) {
-						WtsTransTab tr = getTdyTxnByProcessIdAppId(app.getProcessId(),
+						WtsTransTab tr = getTdyTxnByProcessIdAppId(processId,
 								TreatmentDate.getInstance().getTreatmentDate(), app.getApplicationId());
 						if (tr != null) {
 							if (tr.getSendetaemailflag() == 0) {
-								emailService.SendMailAlertNewEta(app.getEmailId());
+								emailService.SendMailAlertNewEta(proAppMapDao.getAppMappingEmailId(processId, app.getApplicationId()));
 								tr.setSendetaemailflag(1);
 							}
 						}

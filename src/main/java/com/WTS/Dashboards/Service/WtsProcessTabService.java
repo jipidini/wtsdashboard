@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.WTS.Dashboards.DTO.ApplicationMappingDTO;
+import com.WTS.Dashboards.DTO.ProcessDTO;
 import com.WTS.Dashboards.Entity.WtsProcessTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
 import com.WTS.Dashboards.dao.WtsProcessTabDao;
@@ -18,6 +20,13 @@ public class WtsProcessTabService implements IWtsServiceInterface {
 	 return prosDao.getAllprocess();
 	}
 
+		public List<ProcessDTO> getAllprocessDTOs() {
+		 return prosDao.getAllprocessDTOs();
+		}
+
+		public List<ApplicationMappingDTO> getAllDTOsForApplication(int applicationId, int processId, int parentId) {
+			 return prosDao.getAllDTOsForApplication(applicationId,processId,parentId);
+			}
 	
 	public synchronized boolean addProcess(WtsProcessTab process) {
 		if (prosDao.processExists(process.getName())) {

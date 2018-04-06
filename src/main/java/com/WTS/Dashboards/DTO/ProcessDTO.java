@@ -1,4 +1,4 @@
-package com.WTS.Dashboards.Entity;
+package com.WTS.Dashboards.DTO;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -6,57 +6,40 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
-import javax.persistence.Table;
 
+import com.WTS.Dashboards.Entity.WtsAppTab;
+import com.WTS.Dashboards.Entity.WtsNewEtaTab;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-	@Entity
-	@Table(name="wts_process_tab")
-	@javax.persistence.Cacheable
-	public class WtsProcessTab implements Serializable { 
-		private static final long serialVersionUID = 1L;
-		@Id
-		//@GeneratedValue(strategy=GenerationType.AUTO)
-		@Column(name="process_id")
-	    private int processId;  
-		@Column(name="name")
+public class ProcessDTO implements Serializable {
+	 private int processId;  
+		
 	    private String name;
-		@Column(name="sequence")
+		
 		private int sequence;
-		@Column(name="comments")
+		
 		private String comments;
-		public Set<WtsNewEtaTab> getEta() {
-			return eta;
-		}
-		public void setEta(Set<WtsNewEtaTab> eta) {
-			this.eta = eta;
-		}
-		@Column(name="weight")
+		
 		private int weight;
-		@Column(name="last_update_time")
+		
 		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		private Timestamp lastUpdateTime;
+		
 		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-		@Column(name="expected_start_time")
 		private Timestamp expectedStartTime;
-		@Column(name="expected_end_time")
 		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		private Timestamp expectedEndTime;
-		@Column(name="enable_flag")
+	
 		private int enableFlag;
 		
-	
-	
-		@OneToMany(fetch = FetchType.EAGER, mappedBy = "processId")
-		@JsonProperty("NewProcessETA")
-	    private Set<WtsNewEtaTab> eta = new HashSet<WtsNewEtaTab>();
 		
+	    private Set<WtsNewEtaTab> eta = new HashSet<WtsNewEtaTab>();
+	    @JsonProperty("Applications")
+		 private Set<Application> applications = new HashSet<Application>();
 		public int getProcessId() {
 			return processId;
 		}
@@ -110,8 +93,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		}
 		public void setEnableFlag(int enableFlag) {
 			this.enableFlag = enableFlag;
-		}	
-		
-	}
-	
-
+		}
+		public Set<WtsNewEtaTab> getEta() {
+			return eta;
+		}
+		public void setEta(Set<WtsNewEtaTab> eta) {
+			this.eta = eta;
+		}
+		public Set<Application> getApplications() {
+			return applications;
+		}
+		public void setApplications(Set<Application> applications) {
+			this.applications = applications;
+		}
+	    
+}

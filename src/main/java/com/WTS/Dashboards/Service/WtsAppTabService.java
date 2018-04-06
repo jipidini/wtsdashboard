@@ -18,7 +18,7 @@ public class WtsAppTabService implements IWtsServiceInterface{
 
 	
 	public  synchronized boolean addApp(WtsAppTab application) {
-		if (appDao.appExists(application.getProcessId(),application.getApplicationId(),application.getLastUpdateTime())) {
+		if (appDao.appExists(application.getApplicationId(),application.getLastUpdateTime())) {
 	    	   return false;
 	       } else {
 	    	   appDao.addApp(application);;

@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.WTS.Dashboards.DTO.ApplicationMappingDTO;
+import com.WTS.Dashboards.DTO.ProcessDTO;
 import com.WTS.Dashboards.Entity.WtsProcessTab;
 import com.WTS.Dashboards.Service.WtsProcessTabService;
 
@@ -27,9 +29,15 @@ public class WtsProcessTabController {
 	}
 	
 	@GetMapping("process")
-	public ResponseEntity<List<WtsProcessTab>> getAllProcess() {
-		List<WtsProcessTab> list = proservice.getAllprocess();
-		return new ResponseEntity<List<WtsProcessTab>>(list, HttpStatus.OK);	
+	public ResponseEntity<List<ProcessDTO>> getAllProcess() {
+		List<ProcessDTO> list = proservice.getAllprocessDTOs();
+		return new ResponseEntity<List<ProcessDTO>>(list, HttpStatus.OK);	
+	}
+	
+	@GetMapping("application/{applicationId}/{processId}/{parentId}")
+	public ResponseEntity<List<ApplicationMappingDTO>> getAllApplications(@PathVariable("applicationId") int applicationId,@PathVariable("processId") int processId,@PathVariable("parentId") int parentId) {
+		List<ApplicationMappingDTO> list = proservice.getAllDTOsForApplication(applicationId,processId,parentId); 
+		return new ResponseEntity<List<ApplicationMappingDTO>>(list, HttpStatus.OK);	
 	}
 	
 //	@GetMapping("procupdate/{processId}")
