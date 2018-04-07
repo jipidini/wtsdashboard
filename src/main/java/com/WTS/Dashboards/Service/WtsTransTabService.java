@@ -8,11 +8,13 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.WTS.Dashboards.Entity.WtsAppMappingTab;
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
 import com.WTS.Dashboards.Utility.DateUtility;
 import com.WTS.Dashboards.Utility.TreatmentDate;
+import com.WTS.Dashboards.dao.WtsAppMappingTabDao;
 import com.WTS.Dashboards.dao.WtsAppTabDao;
 import com.WTS.Dashboards.dao.WtsNewEtaTabDao;
 import com.WTS.Dashboards.dao.WtsProcessAppMapTabDao;
@@ -37,6 +39,9 @@ public class WtsTransTabService implements IWtsServiceInterface {
 	
 	@Autowired
 	private WtsProcessAppMapTabDao proAppMapDao;
+	
+	@Autowired
+	private WtsAppMappingTabDao appMapDao;
 	
 	public List<WtsTransTab> getAlltransaction() {
 		return tranDao.getAlltransaction();
@@ -116,6 +121,74 @@ public class WtsTransTabService implements IWtsServiceInterface {
 	 return finalList;
 	}
 	
+	public List <WtsTransTab> fetchAllChildTxns(int parentId, int processId) throws Exception{
+		List <WtsTransTab> finalList=new ArrayList<WtsTransTab>();
+		
+		WtsTransTab todayParentTxn=this.getTdyTxnByParentId(parentId,processId,TreatmentDate.getInstance().getTreatmentDate());
+		 if(todayParentTxn!=null) {
+	
+				finalList.add(todayParentTxn);
+				this.updateChildTransactionModifiedDetail(todayParentTxn);
+				
+				List <WtsAppMappingTab> mappings=appMapDao.getAllAppMappingsByParent(parentId,processId);
+				 if(mappings!=null) {
+					 Iterator<WtsAppMappingTab> appssItr=mappings.iterator();
+					 while (appssItr.hasNext()) {
+						 WtsAppMappingTab app = (WtsAppMappingTab) appssItr.next();
+						 if(app!=null && DateUtility.isAfterNow(app.getStartTime())) {
+							 WtsTransTab newAppTrans= new WtsTransTab();
+							 newAppTrans.setParentId(app.getParentId());
+							 newAppTrans.setChildId(app.getChildId());
+							 String appNam=app.getName();
+							WtsTransTab existingApp=this.getTransactionByParentChildId(app.getChildId(), app.getParentId(),processId,TreatmentDate.getInstance().getTreatmentDate());
+							if(existingApp!=null) {
+								System.out.println("existing app TXn..");
+									this.updateChildTransactionModifiedDetail(existingApp);
+									finalList.add(existingApp);
+							}else {
+								this.addTransaction(newAppTrans,appNam);
+								finalList.add(newAppTrans);
+							}
+								
+	
+						 }
+						
+					} 
+				 }
+			
+		 }else {
+		
+			 WtsTransTab newTrans= new WtsTransTab();
+			 newTrans.setParentId(parentId);
+			 finalList.add(newTrans);
+			 List <WtsAppMappingTab> mappings=appMapDao.getAllAppMappingsByParent(parentId,processId);
+			 if(mappings!=null) {
+				 Iterator<WtsAppMappingTab> appssItr=mappings.iterator();
+				 while (appssItr.hasNext()) {
+					 WtsAppMappingTab app = (WtsAppMappingTab) appssItr.next();
+					 if(app!=null && DateUtility.isAfterNow(app.getStartTime())) {
+						 WtsTransTab newAppTrans= new WtsTransTab();
+						 newAppTrans.setParentId(app.getParentId());
+						 newAppTrans.setChildId(app.getChildId());
+						 finalList.add(newAppTrans);
+					 }
+					
+				} 
+			 }
+		 
+			 Iterator<WtsTransTab> trnItr=finalList.iterator();
+			 while (trnItr.hasNext()) {
+				WtsTransTab wtsTransTab = (WtsTransTab) trnItr.next();
+				this.addProcessTransaction(wtsTransTab);
+			}
+		 
+		 
+		 
+		 }
+		
+	 return finalList;
+	}
+	
 	
 public synchronized boolean addProcessTransaction(WtsTransTab trans) {
 		
@@ -148,18 +221,31 @@ public synchronized boolean addProcessTransaction(WtsTransTab trans) {
 	}
 
 	
+	public void updateChildTransactionModifiedDetail(WtsTransTab trans) throws Exception {
+		System.out.println("updateChildTransactionModifiedDetail(WtsTransTab trans)");
+		tranDao.updateChildTransactionModifiedDetail(trans);
+	}
+	
 	public WtsTransTab getTdyTxnByProcessId(int processId, String trtDt) {
 		System.out.println("getTransactionByProcessId-huaa");
 		WtsTransTab tr=  tranDao.getTdyTxnByProcessId(processId,trtDt);
 		return tr;
 	}
 	
+	public WtsTransTab getTdyTxnByParentId(int parentId, int processId, String trtDt) {
+		WtsTransTab tr=  tranDao.getTdyTxnByParentId(parentId,processId,trtDt);
+		return tr;
+	}
 	
 	public WtsTransTab getTransactionByAppIdProId(int appId,int proId, String treatDt) {
 		WtsTransTab tr= tranDao.getTransactionByAppIdProId(appId,proId,treatDt);
 		return tr;
 	}
 	
+	public WtsTransTab getTransactionByParentChildId(int childId,int parentId, int processId, String treatDt) {
+		WtsTransTab tr= tranDao.getTransactionByParentChildId(childId, parentId,processId, treatDt);
+		return tr;
+	}
 	public void updateTransactionByProcessId(WtsTransTab trans) {
 		tranDao.updateTransaction(trans);
 		

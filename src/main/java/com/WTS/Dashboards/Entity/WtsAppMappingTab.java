@@ -32,6 +32,8 @@ public class WtsAppMappingTab implements Serializable {
                 private int appMappingId;  
                 @Column(name="name")
     private String name;
+                @Column(name="process_id")                
+                private int processId;
                 @Column(name="parent_id")                
                 private int parentId;
                 @Column(name="child_id")                
@@ -74,16 +76,22 @@ public class WtsAppMappingTab implements Serializable {
                 @JoinColumn(name = "child_id", nullable = false,insertable=false,updatable=false) 
     private WtsAppTab childApp;
                 
-                @OneToMany(fetch = FetchType.EAGER, mappedBy = "appMappingId")
+                @OneToMany(fetch = FetchType.EAGER, mappedBy = "parentId")
                 @JsonProperty("Transactions")
     private Set<WtsTransTab> tran = new HashSet<WtsTransTab>();
                 
-                @OneToMany(fetch = FetchType.EAGER, mappedBy = "appMappingId")
+                @OneToMany(fetch = FetchType.EAGER, mappedBy = "parentId")
                 @JsonProperty("NewETA")
     private Set<WtsNewEtaTab> eta = new HashSet<WtsNewEtaTab>();
                 
                
-                public String getName() {
+                public int getProcessId() {
+					return processId;
+				}
+				public void setProcessId(int processId) {
+					this.processId = processId;
+				}
+				public String getName() {
                                 return name;
                 }
                 public void setName(String name) {

@@ -25,15 +25,17 @@ public class WtsNewEtaTab implements Serializable {
 	private String eventDate;
 	@Column(name="process_id")
 	private int processId;
-	@Column(name="app_mapping_id")
-	private int appMappingId;
+	@Column(name="parent_id",nullable = false)
+    private Integer parentId;  
+	@Column(name="child_id",nullable = false)
+    private Integer childId;
 	@Column(name="application_id")
 	private int applicationId;
 	@Column(name="new_eta_start_transaction")
-	 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+	 @JsonFormat(timezone= "CET", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private Timestamp newEtaStartTransaction;
 	@Column(name="new_eta_end_transaction")
-	 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+	 @JsonFormat(timezone= "CET", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private Timestamp newEtaEndTransaction;
 	@Column(name="each_problem_flag")
 	private int problemFlag;
@@ -57,11 +59,23 @@ public class WtsNewEtaTab implements Serializable {
 		this.processId = processId;
 	}
 	
-	public int getAppMappingId() {
-		return appMappingId;
+	public Integer getParentId() {
+		if(parentId==null){
+			return 0;
+		}else
+		return parentId;
 	}
-	public void setAppMappingId(int appMappingId) {
-		this.appMappingId = appMappingId;
+	public void setParentId(Integer parentId) {
+		if(parentId==0){
+			this.parentId = null;
+		}else
+		this.parentId = parentId;
+	}
+	public Integer getChildId() {
+		if(childId==null){
+			return 0;
+		}else
+		return childId;
 	}
 	public int getApplicationId() {
 		return applicationId;

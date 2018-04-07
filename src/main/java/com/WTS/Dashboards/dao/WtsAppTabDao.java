@@ -88,14 +88,14 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 		 return appDTO;
 	 }
 	
-	 public Application convertApplicationDTO(int parentId, WtsAppTab child) {
+	 public Application convertApplicationDTO(int parentId, WtsAppTab child,int processId) {
 		 Application appDTO=null;
 		 if(child!=null) {
 			 appDTO= new Application();
 			 appDTO.setApplicationId(child.getApplicationId());
 			 appDTO.setName(child.getName());
 			 appDTO.setComments(child.getComments());
-			 WtsAppMappingTab appMap=appMapDao.getAllAppMappingsByParent(parentId,child.getApplicationId());
+			 WtsAppMappingTab appMap=appMapDao.getAppMappingsByParent(parentId,child.getApplicationId(),processId);
 			 if(appMap!=null) {
 				 appDTO.setSequence(appMap.getSequence());
 				 appDTO.setTrigId(appMap.getTrigId());

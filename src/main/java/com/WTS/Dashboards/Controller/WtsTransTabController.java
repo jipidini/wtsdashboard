@@ -75,6 +75,17 @@ public class WtsTransTabController {
 		
 	}
 	
+	@GetMapping("transaction/childpage/{parentId}/{processId}")
+
+	public  ResponseEntity<List <WtsTransTab>> getTransactionForParentId(@PathVariable("parentId") int parentId,@PathVariable("processId") int processId) throws Exception
+	{
+		
+		List  finalList=trs.fetchAllChildTxns(parentId,processId);
+//		finalList.addAll(etaDAO.getAllChildEta());
+//	 trs.EtaMail(parentId);
+	 return new ResponseEntity<List <WtsTransTab>>(finalList,HttpStatus.OK);
+		
+	}
 	
 	@GetMapping("testSMS/{number}")
 

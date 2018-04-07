@@ -74,11 +74,11 @@ public class WtsProcessAppMapTab implements Serializable {
                 @JoinColumn(name = "application_id", nullable = false,insertable=false,updatable=false) 
     private WtsAppTab application;
                 
-                @OneToMany(fetch = FetchType.EAGER, mappedBy = "appMappingId")
+                @OneToMany(fetch = FetchType.EAGER, mappedBy = "parentId")
                 @JsonProperty("Transactions")
     private Set<WtsTransTab> tran = new HashSet<WtsTransTab>();
                 
-                @OneToMany(fetch = FetchType.EAGER, mappedBy = "appMappingId")
+                @OneToMany(fetch = FetchType.EAGER, mappedBy = "parentId")
                 @JsonProperty("NewETA")
     private Set<WtsNewEtaTab> eta = new HashSet<WtsNewEtaTab>();
                 

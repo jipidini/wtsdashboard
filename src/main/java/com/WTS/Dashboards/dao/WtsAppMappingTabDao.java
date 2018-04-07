@@ -34,16 +34,29 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 		
 	}
 
-	public WtsAppMappingTab getAllAppMappingsByParent(int parentId,int applicationId) {
+	public WtsAppMappingTab getAppMappingsByParent(int parentId,int applicationId, int processId) {
 		 System.out.println("parentId"+parentId);
-		   String hql="FROM WtsAppMappingTab as app WHERE app.parentId=:parent AND app.childId=:child";
+		   String hql="FROM WtsAppMappingTab as app WHERE app.parentId=:parent AND app.childId=:child AND app.processId=:PROC";
 		   
-		 List <WtsAppMappingTab> ls=entityManager.createQuery(hql).setParameter("parent",parentId).setParameter("child", applicationId).getResultList();
+		 List <WtsAppMappingTab> ls=entityManager.createQuery(hql).setParameter("parent",parentId).setParameter("child", applicationId).setParameter("PROC", processId).getResultList();
 		  if(ls!=null && !ls.isEmpty())
 			  return ls.get(0);
 		  else
 	   return null;
 	}
+	
+	
+	public List<WtsAppMappingTab> getAllAppMappingsByParent(int parentId, int processId) {
+		 System.out.println("parentId"+parentId);
+		   String hql="FROM WtsAppMappingTab as app WHERE app.parentId=:parent and app.processId=:processId";
+		   
+		 List <WtsAppMappingTab> ls=entityManager.createQuery(hql).setParameter("parent",parentId).setParameter("processId",processId).getResultList();
+		  if(ls!=null && !ls.isEmpty())
+			  return ls;
+		  else
+	   return null;
+	}
+	
 	
 	public void addAppMappings(WtsAppMappingTab mapping) {
 		entityManager.persist(mapping);

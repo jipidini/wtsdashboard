@@ -62,14 +62,14 @@ public class WtsProcessTabDao implements IWtsDaoInterface {
 			DTO.setEnableFlag(parentApp.getEnableFlag());
 			DTO.setComments(parentApp.getComments());
 			DTO.setEta(parentApp.getEta());
-			if(processId>0) {
-				WtsProcessAppMapTab proMap=proAppMapDao.getAllAppMappingsByProcess(processId, applicationId);
+			if(parentId>0){
+				WtsAppMappingTab proMap=appMapDao.getAppMappingsByParent(parentId, applicationId,processId);
 				if(proMap!=null) {
 					DTO.setExpectedStartTime(proMap.getStartTime());
 					DTO.setExpectedEndTime(proMap.getEndTime());
 				}
-			}else if(parentId>0){
-				WtsAppMappingTab proMap=appMapDao.getAllAppMappingsByParent(parentId, applicationId);
+			}else if(processId>0) {
+				WtsProcessAppMapTab proMap=proAppMapDao.getAllAppMappingsByProcess(processId, applicationId);
 				if(proMap!=null) {
 					DTO.setExpectedStartTime(proMap.getStartTime());
 					DTO.setExpectedEndTime(proMap.getEndTime());
@@ -78,14 +78,14 @@ public class WtsProcessTabDao implements IWtsDaoInterface {
 			
 		}
 		Set<Application> childrens=new HashSet<>();
-		String hql = "FROM WtsAppMappingTab as mapp WHERE mapp.parentId=:app";
-		List<WtsAppMappingTab> mappingDBs=entityManager.createQuery(hql).setParameter("app",applicationId).getResultList();
+		String hql = "FROM WtsAppMappingTab as mapp WHERE mapp.parentId=:app AND mapp.processId=:proc";
+		List<WtsAppMappingTab> mappingDBs=entityManager.createQuery(hql).setParameter("app",applicationId).setParameter("proc",processId).getResultList();
 		if(mappingDBs!=null && !mappingDBs.isEmpty())
 		{
 			Iterator<WtsAppMappingTab> procDBItr=mappingDBs.iterator();
 			while (procDBItr.hasNext()) {
 				WtsAppMappingTab mapping = (WtsAppMappingTab) procDBItr.next();
-				childrens.add(appDao.convertApplicationDTO(parentApp.getApplicationId(),appDao.getAppById(mapping.getChildId())));
+				childrens.add(appDao.convertApplicationDTO(parentApp.getApplicationId(),appDao.getAppById(mapping.getChildId()),processId));
 			}
 		}
 		DTO.setApplications(childrens);

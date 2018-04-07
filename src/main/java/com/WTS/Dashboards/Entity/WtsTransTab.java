@@ -36,8 +36,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 	    private int transactionId;  
 		@Column(name="process_id",nullable = false)
 	    private Integer processId;  
-		@Column(name="app_mapping_id",nullable = false)
-	    private Integer appMappingId;  
+		@Column(name="parent_id",nullable = false)
+	    private Integer parentId;  
+		@Column(name="child_id",nullable = false)
+	    private Integer childId;  
 		@Column(name="application_id",nullable = false)
 	    private Integer applicationId; 
 
@@ -45,12 +47,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		@Column(name="event_date")
 	    private String eventDate;
 
-		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+		 @JsonFormat(timezone= "CET", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		@Column(name="start_transaction")
 		private Date startTransaction ;
 		@Column(name="end_transaction")
 
-		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+		 @JsonFormat(timezone= "CET", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		private  Date endTransaction ;
 		@Column(name="status_id")
 		private int statusId;
@@ -105,18 +107,33 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		}
 		
 		
-		public Integer getAppMappingId() {
-			if(appMappingId==null){
+		
+		
+		public Integer getParentId() {
+			if(parentId==null){
 				return 0;
 			}else
-			return appMappingId;
+			return parentId;
 		}
-		public void setAppMappingId(Integer appMappingId) {
-			if(appMappingId==0){
-				this.appMappingId = null;
+		public void setParentId(Integer parentId) {
+			if(parentId==0){
+				this.parentId = null;
 			}else
-			this.appMappingId = appMappingId;
+			this.parentId = parentId;
 		}
+		public Integer getChildId() {
+			if(childId==null){
+				return 0;
+			}else
+			return childId;
+		}
+		public void setChildId(Integer childId) {
+			if(childId==0){
+				this.childId = null;
+			}else
+			this.childId = childId;
+		}
+		
 		public String getEventDate() {
 			return eventDate;
 		}
