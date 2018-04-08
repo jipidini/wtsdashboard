@@ -121,14 +121,14 @@ public class WtsTransTabService implements IWtsServiceInterface {
 	 return finalList;
 	}
 	
-	public List <WtsTransTab> fetchAllChildTxns(int parentId, int processId) throws Exception{
+	public List <WtsTransTab> fetchAllChildTxns(int parentId, int processId, boolean mainpageNav) throws Exception{
 		List <WtsTransTab> finalList=new ArrayList<WtsTransTab>();
 		
 		WtsTransTab todayParentTxn=this.getTdyTxnByParentId(parentId,processId,TreatmentDate.getInstance().getTreatmentDate());
 		 if(todayParentTxn!=null) {
 	
 				finalList.add(todayParentTxn);
-				this.updateChildTransactionModifiedDetail(todayParentTxn);
+				this.updateChildTransactionModifiedDetail(todayParentTxn,mainpageNav);
 				
 				List <WtsAppMappingTab> mappings=appMapDao.getAllAppMappingsByParent(parentId,processId);
 				 if(mappings!=null) {
@@ -137,13 +137,14 @@ public class WtsTransTabService implements IWtsServiceInterface {
 						 WtsAppMappingTab app = (WtsAppMappingTab) appssItr.next();
 						 if(app!=null && DateUtility.isAfterNow(app.getStartTime())) {
 							 WtsTransTab newAppTrans= new WtsTransTab();
+							 newAppTrans.setProcessId(processId);
 							 newAppTrans.setParentId(app.getParentId());
 							 newAppTrans.setChildId(app.getChildId());
 							 String appNam=app.getName();
 							WtsTransTab existingApp=this.getTransactionByParentChildId(app.getChildId(), app.getParentId(),processId,TreatmentDate.getInstance().getTreatmentDate());
 							if(existingApp!=null) {
 								System.out.println("existing app TXn..");
-									this.updateChildTransactionModifiedDetail(existingApp);
+									this.updateChildTransactionModifiedDetail(existingApp,mainpageNav);
 									finalList.add(existingApp);
 							}else {
 								this.addTransaction(newAppTrans,appNam);
@@ -159,6 +160,7 @@ public class WtsTransTabService implements IWtsServiceInterface {
 		 }else {
 		
 			 WtsTransTab newTrans= new WtsTransTab();
+			 newTrans.setProcessId(processId);
 			 newTrans.setParentId(parentId);
 			 finalList.add(newTrans);
 			 List <WtsAppMappingTab> mappings=appMapDao.getAllAppMappingsByParent(parentId,processId);
@@ -168,6 +170,7 @@ public class WtsTransTabService implements IWtsServiceInterface {
 					 WtsAppMappingTab app = (WtsAppMappingTab) appssItr.next();
 					 if(app!=null && DateUtility.isAfterNow(app.getStartTime())) {
 						 WtsTransTab newAppTrans= new WtsTransTab();
+						 newAppTrans.setProcessId(processId);
 						 newAppTrans.setParentId(app.getParentId());
 						 newAppTrans.setChildId(app.getChildId());
 						 finalList.add(newAppTrans);
@@ -221,9 +224,9 @@ public synchronized boolean addProcessTransaction(WtsTransTab trans) {
 	}
 
 	
-	public void updateChildTransactionModifiedDetail(WtsTransTab trans) throws Exception {
+	public void updateChildTransactionModifiedDetail(WtsTransTab trans, boolean mainpageNav) throws Exception {
 		System.out.println("updateChildTransactionModifiedDetail(WtsTransTab trans)");
-		tranDao.updateChildTransactionModifiedDetail(trans);
+		tranDao.updateChildTransactionModifiedDetail(trans,mainpageNav);
 	}
 	
 	public WtsTransTab getTdyTxnByProcessId(int processId, String trtDt) {

@@ -77,6 +77,13 @@ public class WtsNewEtaTab implements Serializable {
 		}else
 		return childId;
 	}
+	
+	public void setChildId(Integer childId) {
+		if(childId==0){
+			this.childId = null;
+		}else
+		this.childId = childId;
+	}
 	public int getApplicationId() {
 		return applicationId;
 	}

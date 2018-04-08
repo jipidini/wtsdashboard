@@ -34,11 +34,11 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 		
 	}
 
-	public WtsAppMappingTab getAppMappingsByParent(int parentId,int applicationId, int processId) {
+	public WtsAppMappingTab getAppMappingsByParent(int parentId,int childId, int processId) {
 		 System.out.println("parentId"+parentId);
 		   String hql="FROM WtsAppMappingTab as app WHERE app.parentId=:parent AND app.childId=:child AND app.processId=:PROC";
 		   
-		 List <WtsAppMappingTab> ls=entityManager.createQuery(hql).setParameter("parent",parentId).setParameter("child", applicationId).setParameter("PROC", processId).getResultList();
+		 List <WtsAppMappingTab> ls=entityManager.createQuery(hql).setParameter("parent",parentId).setParameter("child", childId).setParameter("PROC", processId).getResultList();
 		  if(ls!=null && !ls.isEmpty())
 			  return ls.get(0);
 		  else

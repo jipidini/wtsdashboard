@@ -411,7 +411,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	}
 
 	
-	public void updateChildTransactionModifiedDetail(WtsTransTab trans) throws Exception {
+	public void updateChildTransactionModifiedDetail(WtsTransTab trans, boolean mainpageNav) throws Exception {
 		WtsTransTab transa = (WtsTransTab) trans;
 
 		Timestamp startDTTime = null;
@@ -459,7 +459,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 							|| status == WtsTransTabController.STATUS_FAILURE)) {
 
 				// UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
-				this.updateNewChildETA(transa.getProcessId(), existtrans.getParentId(), existtrans.getChildId(), true);
+				this.updateNewChildETA(transa.getProcessId(), existtrans.getParentId(), existtrans.getChildId(), true,mainpageNav);
 				etaCalculated=true;
 
 			} else if (existtrans != null && existtrans.getStatusId() == WtsTransTabController.STATUS_FAILURE
@@ -468,7 +468,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 						&& (FileCreationTime.getEndfileCreationTime(name) != null)
 						&& (FileCreationTime.endTimestamp(name).after(endModDtTime)))
 					// UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
-					this.updateNewChildETA(transa.getProcessId(), existtrans.getParentId(), existtrans.getChildId(), true);
+					this.updateNewChildETA(transa.getProcessId(), existtrans.getParentId(), existtrans.getChildId(), true,mainpageNav);
 				etaCalculated=true;
 			}
 
@@ -504,7 +504,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			}
 
 			if(!etaCalculated && etDAO.isETAExistsForParentChild(transa.getProcessId(),transa.getParentId(),transa.getChildId())) {
-				this.refreshChildETA(transa.getProcessId(), transa.getParentId(),transa.getChildId(), false);
+				this.refreshChildETA(transa.getProcessId(), transa.getParentId(),transa.getChildId(), false,mainpageNav);
 			}
 			
 			// Parent
@@ -514,31 +514,35 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			int startAppID = 0;
 			int endAppID = 0;
 			int status = 0;
-			List<WtsAppTab> apps = appDAO.getAllAppsByProcess(transa.getProcessId());
+			List<WtsAppTab> apps = appDAO.getAllAppsByProcess(transa.getParentId());
+			
+			List<WtsAppMappingTab> appMappings=appMapDao.getAllAppMappingsByParent(transa.getParentId() ,transa.getProcessId());
+			
+			
 			
 			WtsProcessTab processObj=processDAO.getProcessById(transa.getProcessId());
 			Timestamp processExpEndTime=processObj.getExpectedEndTime();
-			if (apps != null) {
-				Iterator<WtsAppTab> appssItr = apps.iterator();
+			if (appMappings != null) {
+				Iterator<WtsAppMappingTab> appssItr = appMappings.iterator();
 				int seq = 0;
 				int mSeq = proAppMapDao.getLastSeq(processObj.getProcessId());
 				while (appssItr.hasNext()) {
-					WtsAppTab wtsAppTab = (WtsAppTab) appssItr.next();
-					int appseq=proAppMapDao.getAppMappingSequence(transa.getProcessId(), wtsAppTab.getApplicationId());
+					WtsAppMappingTab wtsAppTab = (WtsAppMappingTab) appssItr.next();
+					int appseq=wtsAppTab.getSequence();
 					if (appseq == 1) {
-						startAppID = wtsAppTab.getApplicationId();
+						startAppID = wtsAppTab.getChildId();
 						status = WtsTransTabController.STATUS_IN_PROGRESS;
-						WtsTransTab appTxn = this.getTransactionByAppIdProId(startAppID, processObj.getProcessId(),
+						WtsTransTab appTxn = this.getTransactionByParentChildId( transa.getChildId(),transa.getParentId(),transa.getProcessId(),
 								TreatmentDate.getInstance().getTreatmentDate());
 						if (appTxn != null)
 							transa.setStartTransaction(appTxn.getStartTransaction());
 					}
 					if (appseq == mSeq) {
 						seq = appseq;
-						endAppID = wtsAppTab.getApplicationId();
-						String name = wtsAppTab.getName();
+						endAppID = wtsAppTab.getChildId();
+						String name = appDAO.getAppById(endAppID).getName();
 						
-						WtsProcessAppMapTab proMap=proAppMapDao.getAllAppMappingsByProcess(transa.getProcessId(), endAppID);
+						WtsAppMappingTab proMap=appMapDao.getAppMappingsByParent(wtsAppTab.getParentId(),endAppID, transa.getProcessId());
 						if(proMap!=null) {
 							 startDTTime=proMap.getStartTime();
 							 endDtTime=proMap.getEndTime();
@@ -550,8 +554,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 
 						endModDtTime = DateUtility.addBufferTime(endDtTime, bufferTime);
 
-						WtsNewEtaTab et = etDAO.getTdyETATxnByProcessIdAppID(wtsAppTab.getApplicationId(),
-								transa.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+						WtsNewEtaTab et = etDAO.getTdyETATxnByParentChildID(transa.getParentId(), transa.getChildId(),transa.getProcessId(),
+								TreatmentDate.getInstance().getTreatmentDate());
 						if (et != null) {
 							startDTTime = et.getNewEtaStartTransaction();
 							endDtTime = et.getNewEtaEndTransaction();
@@ -568,7 +572,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 						 if(appTxn != null && appTxn.getEndTransaction()!=null ){
 						
 						if(DateUtility.isAfterOrSame(processExpEndTime, appTxn.getEndTransaction())) {
-							etDAO.updateGreenDay(transa.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+							etDAO.updateGreenDayForChilds(transa.getProcessId(),transa.getParentId(), TreatmentDate.getInstance().getTreatmentDate());
 						}
 						 }
 
@@ -597,6 +601,12 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		etDAO.newEtaCalculation(app, processId);
 	}
 
+	private void updateNewChildETA(int processId, int parentId, int childId, boolean isProblem, boolean mainpageNav) throws ParseException {
+		System.out.println("updateupdateNewChildETA entered");
+		// MOVE THIS to the ETA SERVICE
+
+		etDAO.newEtaCalculationForChilds(parentId,childId, processId,mainpageNav);
+	}
 	
 	private void refreshETA(int processId, int applicationId, boolean isProblem) throws ParseException {
 		System.out.println("refreshETA entered");
@@ -606,6 +616,10 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		etDAO.refreshETA(app, processId);
 	}
 	
+	private void refreshChildETA(int processId, int parentId, int childId, boolean isProblem, boolean mainpageNav) throws ParseException {
+		System.out.println("refreshChildETA entered");
+		etDAO.refreshChildETA(parentId,childId,processId,mainpageNav);
+	}
 	
 	private int getFileStatus(Timestamp startDTTime, Timestamp endDtTime, String name) {
 		int finalstatus = 0;

@@ -75,13 +75,17 @@ public class WtsTransTabController {
 		
 	}
 	
-	@GetMapping("transaction/childpage/{parentId}/{processId}")
-
-	public  ResponseEntity<List <WtsTransTab>> getTransactionForParentId(@PathVariable("parentId") int parentId,@PathVariable("processId") int processId) throws Exception
+	@GetMapping("transaction/childpage/{processId}/{parentId}/{mainPageNav}")
+	//PASS mainPageNav=1 when coming from main dashboard to child page, pass 0 when going child to child page
+	public  ResponseEntity<List <WtsTransTab>> getTransactionForParentId(@PathVariable("processId") int processId,@PathVariable("parentId") int parentId,@PathVariable("mainPageNav") int mainPageNav) throws Exception
 	{
+		boolean mainpageNav=false;
+		if(mainPageNav==1) {
+			 mainpageNav=true;
+		}
 		
-		List  finalList=trs.fetchAllChildTxns(parentId,processId);
-//		finalList.addAll(etaDAO.getAllChildEta());
+		List  finalList=trs.fetchAllChildTxns(parentId,processId,mainpageNav);
+		finalList.addAll(etaDAO.getAllChildEta(parentId,processId));
 //	 trs.EtaMail(parentId);
 	 return new ResponseEntity<List <WtsTransTab>>(finalList,HttpStatus.OK);
 		

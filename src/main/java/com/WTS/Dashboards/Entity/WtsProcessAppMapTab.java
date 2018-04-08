@@ -60,11 +60,11 @@ public class WtsProcessAppMapTab implements Serializable {
                 
                 
                 @Column(name="start_time")
-                @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+                @JsonFormat(timezone= "CET", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
                 private Timestamp startTime;
                 
                 @Column(name="end_time")
-                @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+                @JsonFormat(timezone= "CET", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
                 private Timestamp endTime;
                 
                 @ManyToOne(fetch=FetchType.EAGER)
