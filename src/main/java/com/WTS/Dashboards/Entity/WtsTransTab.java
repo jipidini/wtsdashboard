@@ -47,12 +47,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		@Column(name="event_date")
 	    private String eventDate;
 
-		 @JsonFormat(timezone= "CET", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		@Column(name="start_transaction")
 		private Date startTransaction ;
 		@Column(name="end_transaction")
 
-		 @JsonFormat(timezone= "CET", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+		 @JsonFormat(timezone= "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 		private  Date endTransaction ;
 		@Column(name="status_id")
 		private int statusId;
