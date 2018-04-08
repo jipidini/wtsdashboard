@@ -124,7 +124,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	 * 0 ? true : false; }
 	 */
 	public WtsTransTab getTdyTxnByProcessId(int processId, String trtDt) {
-		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND application_id IS null and app_mapping_id IS null";
+		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND application_id IS null and parent_id IS null";
 
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processId);
@@ -192,7 +192,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	}
 
 	public WtsTransTab getTdyTxnByProcessIdAppId(int processId, String trtDt, int appId) {
-		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND application_id= ? and app_mapping_id IS null";
+		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND application_id= ? and parent_id IS null and childId IS NULL";
 
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processId);

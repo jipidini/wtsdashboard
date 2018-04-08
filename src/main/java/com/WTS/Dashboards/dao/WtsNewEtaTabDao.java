@@ -1125,8 +1125,8 @@ public WtsNewEtaTab getTdyETATxnByParentChildID(int parentId,int childId,int pro
 	
   
   public List<WtsNewEtaTab> getAllEta() {
-		String hql = "FROM WtsNewEtaTab as et ORDER BY et.applicationId";
-		return (List<WtsNewEtaTab>) entityManager.createQuery(hql).getResultList();
+		String hql = "FROM WtsNewEtaTab as et where et.eventDate=?  AND et.parentId IS NULL AND et.childId IS NULL ORDER BY et.applicationId";
+		return (List<WtsNewEtaTab>) entityManager.createQuery(hql).setParameter(1, TreatmentDate.getInstance().getTreatmentDate()).getResultList();
 	}
   
   public List<WtsNewEtaTab> getAllChildEta(int parentId, int processId) {
