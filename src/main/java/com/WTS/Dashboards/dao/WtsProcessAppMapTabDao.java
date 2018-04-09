@@ -40,6 +40,17 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 	   return null;
 	}
 	
+	public  List <WtsProcessAppMapTab> getAllAppMappingsForProcess(int processId) {
+		 System.out.println("processId"+processId);
+		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc";
+		   
+		 List <WtsProcessAppMapTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).getResultList();
+		  if(ls!=null && !ls.isEmpty())
+			  return ls;
+		  else
+	   return null;
+	}
+	
 	public Timestamp getAppMappingStartTime(int processId,int applicationId) {
 		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc AND app.applicationId=:app";
 		   
