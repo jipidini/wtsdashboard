@@ -445,15 +445,15 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			Date endTransaction) {
 		Timestamp current = currentTimestamp();
 		int appstatus=WtsTransTabController.STATUS_YET_TO_START;
-		if(this.isAllChildAppsGreen(processId,  int parentId,int childId)) {
-			appstatus=WtsTransTabController.STATUS_SUCCESS;
-		}else if(txnstatus==WtsTransTabController.STATUS_FAILURE && startTransaction==null) {
-			appstatus=WtsTransTabController.STATUS_APP_AMBER;
-		}else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && current.after(refEndTime)) {
-			appstatus=WtsTransTabController.STATUS_FAILURE;
-		}else if(txnstatus==WtsTransTabController.STATUS_SUCCESS) {
-			appstatus=WtsTransTabController.STATUS_SUCCESS;
-		}
+//		if(this.isAllChildAppsGreen(processId,  parentId, childId)) {
+//			appstatus=WtsTransTabController.STATUS_SUCCESS;
+//		}else if(txnstatus==WtsTransTabController.STATUS_FAILURE && startTransaction==null) {
+//			appstatus=WtsTransTabController.STATUS_APP_AMBER;
+//		}else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && current.after(refEndTime)) {
+//			appstatus=WtsTransTabController.STATUS_FAILURE;
+//		}else if(txnstatus==WtsTransTabController.STATUS_SUCCESS) {
+//			appstatus=WtsTransTabController.STATUS_SUCCESS;
+//		}
 		
 		return appstatus;
 	}
@@ -461,16 +461,16 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			Date endTransaction) {
 		Timestamp current = currentTimestamp();
 		int appstatus=WtsTransTabController.STATUS_YET_TO_START;
-		if(this.isAllProcessAppsNotStarted(int processId, int parentId)) {
-			appstatus=WtsTransTabController.STATUS_YET_TO_START;
-		}else if(this.isAllProcessAppsGreen(int processId, int parentId)) {
-			appstatus=WtsTransTabController.STATUS_PROC_LIGHTGREEN;
-		}else if(this.isAnyProcessAppsRed(int processId, int parentId)) {
-			appstatus=WtsTransTabController.STATUS_PROC_ORANGE;
-		}
-		else {
-			appstatus=WtsTransTabController.STATUS_SUCCESS;
-		}
+//		if(this.isAllProcessAppsNotStarted(int processId, int parentId)) {
+//			appstatus=WtsTransTabController.STATUS_YET_TO_START;
+//		}else if(this.isAllProcessAppsGreen(int processId, int parentId)) {
+//			appstatus=WtsTransTabController.STATUS_PROC_LIGHTGREEN;
+//		}else if(this.isAnyProcessAppsRed(int processId, int parentId)) {
+//			appstatus=WtsTransTabController.STATUS_PROC_ORANGE;
+//		}
+//		else {
+//			appstatus=WtsTransTabController.STATUS_SUCCESS;
+//		}
 		
 		return appstatus;
 	}
@@ -695,7 +695,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			//read times-app mapping tabke's parent id
 			Timestamp refstartTime=appMapDao.getAppMappingStartTime(transa.getProcessId(), transa.getParentId());
 			Timestamp refEndTime=appMapDao.getAppMappingEndTime(transa.getProcessId(), transa.getParentId());
-			transa.setProcessStatus(getProcessButtonStatusForChild(transa.getProcessId(), transa.getParentId(),,status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
+			transa.setProcessStatus(getProcessButtonStatusForChild(transa.getProcessId(), transa.getParentId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
 			
 		}
 
