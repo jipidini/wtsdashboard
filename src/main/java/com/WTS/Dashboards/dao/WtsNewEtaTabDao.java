@@ -156,11 +156,11 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		// start Change case
 		if (startDiff > 0) {
 			this.updateDifferencePROCESSETA(startDiff, origDiff, etaLst, apps, startProcessTime, endProcessTime,
-					fileStart.getTime(), processId, false);
+					fileStart.getTime(), processId, false,currentSeq);
 		}
 		if (endDiff > 0) {
 			this.updateDifferencePROCESSETA(endDiff, origDiff, etaLst, apps, startProcessTime, endProcessTime,
-					fileStart.getTime(), processId, true);
+					fileStart.getTime(), processId, true,currentSeq);
 
 		}
 
@@ -229,12 +229,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		// start Change case
 		if (startDiff > 0) {
 			this.updateDifferenceETA(startDiff, origDiff, etaLst, apps, startProcessTime, endProcessTime,
-					fileStart.getTime(), parentId, childId, processId, false);
+					fileStart.getTime(), parentId, processId, false,currentSeq);
 
 		}
 		if (endDiff > 0) {
 			this.updateDifferenceETA(endDiff, origDiff, etaLst, apps, startProcessTime, endProcessTime,
-					fileStart.getTime(), parentId, childId, processId, true);
+					fileStart.getTime(), parentId, processId, true,currentSeq);
+			
+			
 
 		}
 		entityManager.flush();
@@ -243,12 +245,12 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	}
 
 	public void updateDifferenceETA(Long diff, Long origDiff, List<WtsNewEtaTab> etaLst, List<WtsAppMappingTab> apps,
-			Timestamp startParentTime, Timestamp endParentTime, Long fileStartTime, int parentId, int childId,
-			int processId, boolean endFlow) {
+			Timestamp startParentTime, Timestamp endParentTime, Long fileStartTime, int parentId,
+			int processId, boolean endFlow,int currentSeq) {
 
 		Iterator<WtsAppMappingTab> apIt = apps.iterator();
 		int buf = 0;
-		int currentSeq = 0;
+
 
 		while (apIt.hasNext()) {
 			WtsAppMappingTab nextApp = (WtsAppMappingTab) apIt.next();
@@ -313,6 +315,15 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		exist_proc_eta.setNewEtaEndTransaction(endParentTime);
 		exist_proc_eta.setNewEtaStartTransaction(startParentTime);
 		etaLst.add(exist_proc_eta);
+		
+		int parentSeq=proAppMapDao.getAppMappingSequence(processId, parentId);
+		Timestamp startProcessTime=processDAO.getProcessStartTime(processId);
+		Timestamp endProcessTime=processDAO.getProcessEndTime(processId);
+		List<WtsProcessAppMapTab> parentProcesses=proAppMapDao.getAllAppMappingsForProcess(processId);
+		if(parentProcesses!=null && !parentProcesses.isEmpty()) {
+			this.updateDifferencePROCESSETA(diff, origDiff, etaLst, parentProcesses, startProcessTime, endProcessTime, fileStartTime, processId, endFlow,parentSeq);
+		}
+		
 
 		if (!etaLst.isEmpty()) {
 			Iterator<WtsNewEtaTab> etaItr = etaLst.iterator();
@@ -326,10 +337,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 
 	public void updateDifferencePROCESSETA(Long diff, Long origDiff, List<WtsNewEtaTab> etaLst,
 			List<WtsProcessAppMapTab> apps, Timestamp startProcessTime, Timestamp endProcessTime, Long fileStartTime,
-			int processId, boolean endFlow) {
+			int processId, boolean endFlow,int currentSeq) {
 
 		int buf = 0;
-		int currentSeq = 0;
+
 
 		Iterator<WtsProcessAppMapTab> apIt = apps.iterator();
 		while (apIt.hasNext()) {
@@ -377,7 +388,15 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				et.setProblemFlag(1);
 				etaLst.add(et);
 			}
-
+			
+			List<WtsAppMappingTab> childMappings=appMapDao.getAllAppMappingsByParent(nextApp.getApplicationId(), processId);
+			Timestamp startParentTime=appMapDao.getAppMappingStartTime(processId, nextApp.getApplicationId());
+			Timestamp endParentTime=appMapDao.getAppMappingEndTime(processId, nextApp.getApplicationId());
+			if(childMappings!=null && !childMappings.isEmpty()) {
+				this.updateDifferenceETA(diff, origDiff, etaLst, childMappings, startParentTime, endParentTime, fileStartTime, nextApp.getApplicationId(), processId, endFlow, currentSeq);
+			}
+			
+			
 		}
 		// update process ETA
 		WtsNewEtaTab exist_proc_eta = getTdyETATxnByProcessId(processId,
@@ -442,7 +461,6 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		et.setNewEtaEndTransaction(newEnd);
 		et.setNewEtaStartTransaction(newStart);
 		et.setApplicationId(curApp.getApplicationId());
-		et.setProcessId(curApp.getProcessId());
 		et.setProcessId(curApp.getProcessId());
 		et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 		et.setProblemFlag(0);

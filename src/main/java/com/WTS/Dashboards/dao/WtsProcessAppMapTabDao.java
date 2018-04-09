@@ -71,6 +71,27 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 	   return null;
 	}
 	
+	
+	public Timestamp getProcessStartTime(int processId) {
+		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc";
+		   
+		 List <WtsProcessAppMapTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).getResultList();
+		  if(ls!=null && !ls.isEmpty() && ls.get(0)!=null)
+			  return ls.get(0).getStartTime();
+		  else
+	   return null;
+	}
+	
+	public Timestamp getProcessEndTime(int processId) {
+		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc";
+		   
+		 List <WtsProcessAppMapTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).getResultList();
+		  if(ls!=null && !ls.isEmpty() && ls.get(0)!=null)
+			  return ls.get(0).getEndTime();
+		  else
+	   return null;
+	}
+	
 	public int getAppMappingSequence(int processId,int applicationId) {
 		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc AND app.applicationId=:app";
 		   
@@ -80,6 +101,7 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 		  else
 	   return 0;
 	}
+	
 	
 	public int getAppMappingBufferTime(int processId,int applicationId) {
 		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc AND app.applicationId=:app";

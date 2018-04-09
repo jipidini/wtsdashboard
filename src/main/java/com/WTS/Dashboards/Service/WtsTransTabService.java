@@ -147,12 +147,13 @@ public class WtsTransTabService implements IWtsServiceInterface {
 			dtoObj.setStatusId(dbObj.getStatusId());
 			dtoObj.setSendemailflag(dbObj.getSendemailflag());
 			dtoObj.setSendetaemailflag(dbObj.getSendetaemailflag());
-//			dtoObj.setProcessStatus(processStatus);
-//			dtoObj.setAppButtonStatus(appButtonStatus);
+			dtoObj.setProcessStatus(dbObj.getProcessStatus());
+			dtoObj.setAppButtonStatus(dbObj.getAppButtonStatus());
 		}
 		return dtoObj;
 	}
 
+	
 	public List<TransactionDTO> fetchAllChildTxns(int parentId, int processId, boolean mainpageNav) throws Exception {
 		List<WtsTransTab> finalList = new ArrayList<WtsTransTab>();
 		List<TransactionDTO> finalDTOList = new ArrayList<TransactionDTO>();

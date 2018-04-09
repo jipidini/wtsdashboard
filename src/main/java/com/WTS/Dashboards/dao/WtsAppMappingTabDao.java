@@ -1,5 +1,6 @@
 package com.WTS.Dashboards.dao;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -32,6 +33,46 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 		String hql = "FROM WtsAppMappingTab as mapping ORDER BY mapping.appMappingId";
 		return (List<WtsAppMappingTab>) entityManager.createQuery(hql).getResultList();
 		
+	}
+	
+	public Timestamp getAppMappingStartTime(int processId,int applicationId) {
+		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc AND app.applicationId=:app";
+		   
+		 List <WtsProcessAppMapTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).setParameter("app", applicationId).getResultList();
+		  if(ls!=null && !ls.isEmpty() && ls.get(0)!=null)
+			  return ls.get(0).getStartTime();
+		  else
+	   return null;
+	}
+	
+	public Timestamp getAppMappingEndTime(int processId,int applicationId) {
+		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc AND app.applicationId=:app";
+		   
+		 List <WtsProcessAppMapTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).setParameter("app", applicationId).getResultList();
+		  if(ls!=null && !ls.isEmpty() && ls.get(0)!=null)
+			  return ls.get(0).getEndTime();
+		  else
+	   return null;
+	}
+	
+	public Timestamp getAppMappingEndTime(int processId,int parentId,int childId) {
+		   String hql="FROM WtsAppMappingTab as app WHERE app.processId=:proc AND app.parentId=:app and app.childId=:child";
+		   
+		 List <WtsProcessAppMapTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).setParameter("app", parentId).setParameter("child", childId).getResultList();
+		  if(ls!=null && !ls.isEmpty() && ls.get(0)!=null)
+			  return ls.get(0).getEndTime();
+		  else
+	   return null;
+	}
+	
+	public Timestamp getAppMappingStartTime(int processId,int parentId,int childId) {
+		   String hql="FROM WtsAppMappingTab as app WHERE app.processId=:proc AND app.parentId=:app and app.childId=:child";
+		   
+		 List <WtsProcessAppMapTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).setParameter("app", parentId).setParameter("child", childId).getResultList();
+		  if(ls!=null && !ls.isEmpty() && ls.get(0)!=null)
+			  return ls.get(0).getStartTime();
+		  else
+	   return null;
 	}
 
 	public WtsAppMappingTab getAppMappingsByParent(int parentId,int childId, int processId) {

@@ -50,6 +50,27 @@ public class WtsProcessTabDao implements IWtsDaoInterface {
 		return (List<WtsProcessTab>) entityManager.createQuery(hql).getResultList();
 	}
 
+	public Timestamp getProcessStartTime(int processId) {
+		   String hql="FROM WtsProcessTab as app WHERE app.processId=:proc";
+		   
+		 List <WtsProcessTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).getResultList();
+		  if(ls!=null && !ls.isEmpty() && ls.get(0)!=null)
+			  return ls.get(0).getExpectedStartTime();
+		  else
+	   return null;
+	}
+	
+	public Timestamp getProcessEndTime(int processId) {
+		   String hql="FROM WtsProcessTab as app WHERE app.processId=:proc";
+		   
+		 List <WtsProcessTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).getResultList();
+		  if(ls!=null && !ls.isEmpty() && ls.get(0)!=null)
+			  return ls.get(0).getExpectedEndTime();
+		  else
+	   return null;
+	}
+	
+	
 	
 	public List<ApplicationMappingDTO> getAllDTOsForApplication(int applicationId, int processId, int parentId) {
 		List<ApplicationMappingDTO> processDTOs= new ArrayList<ApplicationMappingDTO>();

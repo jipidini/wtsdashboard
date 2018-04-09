@@ -19,9 +19,9 @@ public class TransactionDTO implements Serializable {
 	private String eventDate;
 	
 	//for process health check button code
-	private String processStatus;
+	private Integer processStatus;
 	//for app health check button code
-	private String appButtonStatus;
+	private Integer appButtonStatus;
 	
 	@JsonFormat(timezone = "IST", shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 
@@ -124,21 +124,23 @@ public class TransactionDTO implements Serializable {
 		this.sendetaemailflag = sendetaemailflag;
 	}
 
-	public String getProcessStatus() {
+	public Integer getProcessStatus() {
 		return processStatus;
 	}
 
-	public void setProcessStatus(String processStatus) {
+	public void setProcessStatus(Integer processStatus) {
 		this.processStatus = processStatus;
 	}
 
-	public String getAppButtonStatus() {
+	public Integer getAppButtonStatus() {
 		return appButtonStatus;
 	}
 
-	public void setAppButtonStatus(String appButtonStatus) {
+	public void setAppButtonStatus(Integer appButtonStatus) {
 		this.appButtonStatus = appButtonStatus;
 	}
+
+	
 	
 	
 

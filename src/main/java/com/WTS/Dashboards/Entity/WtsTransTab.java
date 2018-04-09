@@ -62,6 +62,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		 
 		 @Column(name="sendetaemailflag")
          private int sendetaemailflag;
+		 
+		 @Column(name="process_btn_status_id")
+			//for process health check button code
+			private Integer processStatus;
+		 @Column(name="app_btn_status_id")
+			//for app health check button code
+			private Integer appButtonStatus;
 		
 		//@OneToMany(fetch = FetchType.EAGER, mappedBy = "WtsTransTab")
 		
@@ -172,6 +179,18 @@ public int getSendetaemailflag() {
 }
 public void setSendetaemailflag(int sendetaemailflag) {
 	this.sendetaemailflag = sendetaemailflag;
+}
+public Integer getProcessStatus() {
+	return processStatus;
+}
+public void setProcessStatus(Integer processStatus) {
+	this.processStatus = processStatus;
+}
+public Integer getAppButtonStatus() {
+	return appButtonStatus;
+}
+public void setAppButtonStatus(Integer appButtonStatus) {
+	this.appButtonStatus = appButtonStatus;
 }
 
 

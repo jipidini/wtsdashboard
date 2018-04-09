@@ -52,6 +52,10 @@ public class WtsTransTabController {
 	public static final int STATUS_FAILURE=2;
 	public static final int STATUS_DELAYED=3;
 	
+	public static final int STATUS_APP_AMBER=5;
+	public static final int STATUS_PROC_ORANGE=4;
+	public static final int STATUS_PROC_LIGHTGREEN=7;
+	
 	/*@Autowired
 	private WtsTreatTabService trt;*/
 	
