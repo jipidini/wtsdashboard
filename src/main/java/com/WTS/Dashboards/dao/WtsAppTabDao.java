@@ -123,7 +123,16 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 			 }
 			 appDTO.setLastUpdateTime(child.getLastUpdateTime());
 			 appDTO.setEnableFlag(child.getEnableFlag());
-			 appDTO.setEta(child.getEta());
+			 Set etas=new HashSet<>();
+			 List etaList=this.getETAChildTxn(processId,parentId,child.getApplicationId(),TreatmentDate.getInstance().getTreatmentDate());
+				if(etaList!=null)
+				 etas.addAll(etaList);
+			 appDTO.setEta(etas);
+			 Set trans=new HashSet<>();
+			 List transList=this.getTdyChildTxn(processId,parentId,child.getApplicationId(),TreatmentDate.getInstance().getTreatmentDate());
+			 if(transList!=null)
+			 trans.addAll(transList);
+			 appDTO.setTran(trans);
 		 }
 		 return appDTO;
 	 }

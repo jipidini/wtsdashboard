@@ -168,6 +168,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 
 		}
 
+		
+		
 		entityManager.flush();
 
 	}
@@ -299,7 +301,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				et.setProcessId(nextApp.getProcessId());
 				et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 				et.setProblemFlag(1);
-				etaLst.add(et);
+//				etaLst.add(et);
+				this.etaListUpdateWithNoDuplicate(etaLst, et);
 
 			}
 
@@ -318,7 +321,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		endParentTime = new Timestamp(diff + endParentTime.getTime());
 		exist_proc_eta.setNewEtaEndTransaction(endParentTime);
 		exist_proc_eta.setNewEtaStartTransaction(startParentTime);
-		etaLst.add(exist_proc_eta);
+		this.etaListUpdateWithNoDuplicate(etaLst, exist_proc_eta);
+//		etaLst.add(exist_proc_eta);
 		
 		int parentSeq=proAppMapDao.getAppMappingSequence(processId, parentId);
 		Timestamp startProcessTime=processDAO.getProcessStartTime(processId);
@@ -395,7 +399,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				et.setProcessId(nextApp.getProcessId());
 				et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 				et.setProblemFlag(1);
-				etaLst.add(et);
+//				etaLst.add(et);
+				this.etaListUpdateWithNoDuplicate(etaLst, et);
 
 			}
 
@@ -455,7 +460,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				et.setProcessId(processId);
 				et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 				et.setProblemFlag(1);
-				etaLst.add(et);
+//				etaLst.add(et);
+				this.etaListUpdateWithNoDuplicate(etaLst, et);
 			}
 			
 			List<WtsAppMappingTab> childMappings=appMapDao.getAllAppMappingsByParent(nextApp.getApplicationId(), processId);
@@ -486,7 +492,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		exist_proc_eta.setProblemFlag(0);
 		exist_proc_eta.setNewEtaEndTransaction(endProcessTime);
 		exist_proc_eta.setNewEtaStartTransaction(startProcessTime);
-		etaLst.add(exist_proc_eta);
+		this.etaListUpdateWithNoDuplicate(etaLst, exist_proc_eta);
+//		etaLst.add(exist_proc_eta);
 
 		if (!etaLst.isEmpty()) {
 			Iterator<WtsNewEtaTab> etaItr = etaLst.iterator();
@@ -545,7 +552,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				et.setProcessId(processId);
 				et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 				et.setProblemFlag(1);
-				etaLst.add(et);
+//				etaLst.add(et);
+				this.etaListUpdateWithNoDuplicate(etaLst, et);
 			}
 			
 			List<WtsAppMappingTab> childMappings=appMapDao.getAllAppMappingsByParent(nextApp.getApplicationId(), processId);
@@ -574,7 +582,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		exist_proc_eta.setProblemFlag(0);
 		exist_proc_eta.setNewEtaEndTransaction(endProcessTime);
 		exist_proc_eta.setNewEtaStartTransaction(startProcessTime);
-		etaLst.add(exist_proc_eta);
+		this.etaListUpdateWithNoDuplicate(etaLst, exist_proc_eta);
+//		etaLst.add(exist_proc_eta);
 
 		return etaLst;
 
@@ -600,8 +609,39 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		et.setProcessId(curApp.getProcessId());
 		et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 		et.setProblemFlag(0);
-		etaLst.add(et);
+		this.etaListUpdateWithNoDuplicate(etaLst, et);
 
+		return etaLst;
+	}
+
+	public List<WtsNewEtaTab> etaListUpdateWithNoDuplicate(List<WtsNewEtaTab> etaLst, WtsNewEtaTab newObj) {
+		boolean duplicate=false;
+		if(etaLst!=null) {
+			Iterator<WtsNewEtaTab> lstItr=etaLst.iterator();
+			while (lstItr.hasNext()) {
+				WtsNewEtaTab wtsNewEtaTab = (WtsNewEtaTab) lstItr.next();
+				if(wtsNewEtaTab.getApplicationId()== newObj.getApplicationId() &&
+						wtsNewEtaTab.getProcessId()== newObj.getProcessId() &&
+						wtsNewEtaTab.getParentId()== newObj.getParentId() &&
+						wtsNewEtaTab.getChildId()== newObj.getChildId() &&
+						(wtsNewEtaTab.getEventDate()!=null && wtsNewEtaTab.getEventDate().equalsIgnoreCase(newObj.getEventDate() ))) {
+						if(wtsNewEtaTab.getApplicationId()==0 && wtsNewEtaTab.getParentId()==0 && wtsNewEtaTab.getChildId()==0)
+						{
+							System.out.println("process duplicate..no update");
+						}else {
+							wtsNewEtaTab.setNewEtaEndTransaction(newObj.getNewEtaEndTransaction());
+							wtsNewEtaTab.setNewEtaStartTransaction(newObj.getNewEtaStartTransaction());
+							wtsNewEtaTab.setProblemFlag(newObj.getProblemFlag());
+						}		
+						duplicate=true;
+						break;
+				}
+			}
+			if(!duplicate) {
+				etaLst.add(newObj);
+			}
+		}
+		
 		return etaLst;
 	}
 
@@ -623,7 +663,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		et.setProcessId(curApp.getProcessId());
 		et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 		et.setProblemFlag(0);
-		etaLst.add(et);
+//		etaLst.add(et);
+		this.etaListUpdateWithNoDuplicate(etaLst, et);
 
 		return etaLst;
 	}
@@ -715,7 +756,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					// et.setProcessId(processId);
 					// et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 					// et.setProblemFlag(0);
-					etaLst.add(et);
+//					etaLst.add(et);
+					this.etaListUpdateWithNoDuplicate(etaLst, et);
 					// emailService.SendMailAlertNewEta(nextApp.getEmailId());
 
 				} else if (nextAppSeq == currentSeq) {
@@ -742,7 +784,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					// et.setProcessId(processId);
 					// et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 					// et.setProblemFlag(1);
-					etaLst.add(et);
+//					etaLst.add(et);
+					this.etaListUpdateWithNoDuplicate(etaLst, et);
 
 				}
 
@@ -759,7 +802,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			exist_proc_eta.setProblemFlag(0);
 			exist_proc_eta.setNewEtaEndTransaction(endProcessTime);
 			exist_proc_eta.setNewEtaStartTransaction(startProcessTime);
-			etaLst.add(exist_proc_eta);
+			this.etaListUpdateWithNoDuplicate(etaLst, exist_proc_eta);
+//			etaLst.add(exist_proc_eta);
 
 			if (!etaLst.isEmpty()) {
 				Iterator<WtsNewEtaTab> etaItr = etaLst.iterator();
@@ -810,7 +854,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					// et.setProcessId(processId);
 					// et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 					// et.setProblemFlag(0);
-					etaLst.add(et);
+//					etaLst.add(et);
+					this.etaListUpdateWithNoDuplicate(etaLst, et);
 
 				} else if (nextAppSeq == currentSeq) {
 					WtsNewEtaTab et = getTdyETATxnByProcessIdAppID(nextApp.getApplicationId(), processId,
@@ -837,7 +882,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					// et.setProcessId(processId);
 					// et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 					// et.setProblemFlag(1);
-					etaLst.add(et);
+//					etaLst.add(et);
+					this.etaListUpdateWithNoDuplicate(etaLst, et);
 				}
 
 			}
@@ -853,7 +899,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			exist_proc_eta.setProblemFlag(0);
 			exist_proc_eta.setNewEtaEndTransaction(endProcessTime);
 			exist_proc_eta.setNewEtaStartTransaction(startProcessTime);
-			etaLst.add(exist_proc_eta);
+			this.etaListUpdateWithNoDuplicate(etaLst, exist_proc_eta);
+//			etaLst.add(exist_proc_eta);
 
 			if (!etaLst.isEmpty()) {
 				Iterator<WtsNewEtaTab> etaItr = etaLst.iterator();
@@ -956,7 +1003,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Timestamp newStart = new Timestamp(newStartL);
 					et.setNewEtaEndTransaction(newEnd);
 					et.setNewEtaStartTransaction(newStart);
-					etaLst.add(et);
+//					etaLst.add(et);
+					this.etaListUpdateWithNoDuplicate(etaLst, et);
 
 				} else if (nextAppSeq == currentSeq) {
 					WtsNewEtaTab et = getTdyETATxnByParentChildID(nextApp.getParentId(), nextApp.getChildId(),
@@ -971,7 +1019,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					endProcessTime = new Timestamp(startDiff + endProcessTime.getTime());
 					et.setNewEtaEndTransaction(newEnd);
 					et.setNewEtaStartTransaction(newStart);
-					etaLst.add(et);
+//					etaLst.add(et);
+					this.etaListUpdateWithNoDuplicate(etaLst, et);
 
 				}
 
@@ -988,7 +1037,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			exist_proc_eta.setProblemFlag(0);
 			exist_proc_eta.setNewEtaEndTransaction(endProcessTime);
 			exist_proc_eta.setNewEtaStartTransaction(startProcessTime);
-			etaLst.add(exist_proc_eta);
+			this.etaListUpdateWithNoDuplicate(etaLst, exist_proc_eta);
+//			etaLst.add(exist_proc_eta);
 
 			if (!etaLst.isEmpty()) {
 				Iterator<WtsNewEtaTab> etaItr = etaLst.iterator();
@@ -1027,7 +1077,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Timestamp newEnd = new Timestamp(newEndL);
 					et.setNewEtaEndTransaction(newEnd);
 					et.setNewEtaStartTransaction(newStart);
-					etaLst.add(et);
+//					etaLst.add(et);
+					this.etaListUpdateWithNoDuplicate(etaLst, et);
 
 				} else if (nextAppSeq == currentSeq) {
 					WtsNewEtaTab et = getTdyETATxnByParentChildID(nextApp.getParentId(), nextApp.getChildId(),
@@ -1043,7 +1094,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					endProcessTime = new Timestamp(endDiff + endProcessTime.getTime());
 					et.setNewEtaEndTransaction(newEnd);
 					et.setNewEtaStartTransaction(newStart);
-					etaLst.add(et);
+//					etaLst.add(et);
+					this.etaListUpdateWithNoDuplicate(etaLst, et);
 				}
 
 			}
@@ -1059,7 +1111,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			exist_proc_eta.setProblemFlag(0);
 			exist_proc_eta.setNewEtaEndTransaction(endProcessTime);
 			exist_proc_eta.setNewEtaStartTransaction(startProcessTime);
-			etaLst.add(exist_proc_eta);
+			this.etaListUpdateWithNoDuplicate(etaLst, exist_proc_eta);
+//			etaLst.add(exist_proc_eta);
 
 			if (!etaLst.isEmpty()) {
 				Iterator<WtsNewEtaTab> etaItr = etaLst.iterator();
