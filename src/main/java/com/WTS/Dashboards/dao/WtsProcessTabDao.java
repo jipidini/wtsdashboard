@@ -9,6 +9,7 @@ import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -22,6 +23,7 @@ import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
 import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 import com.WTS.Dashboards.Entity.WtsProcessTab;
+import com.WTS.Dashboards.Utility.TreatmentDate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Transactional
@@ -82,7 +84,7 @@ public class WtsProcessTabDao implements IWtsDaoInterface {
 			DTO.setName(parentApp.getName());
 			DTO.setEnableFlag(parentApp.getEnableFlag());
 			DTO.setComments(parentApp.getComments());
-			DTO.setEta(parentApp.getEta());
+			DTO.setEta(this.getETABatchTxn(processId, TreatmentDate.getInstance().getTreatmentDate(), parentId));
 			if(parentId>0){
 				WtsAppMappingTab proMap=appMapDao.getAppMappingsByParent(parentId, applicationId,processId);
 				if(proMap!=null) {
@@ -193,7 +195,19 @@ public class WtsProcessTabDao implements IWtsDaoInterface {
 		return count > 0 ? true : false;
 	}
 	
+	public Set<WtsNewEtaTab> getETABatchTxn(int processId, String trtDt,int parentId) {
+		String hql = "from WtsNewEtaTab WHERE processId=? and eventDate= ? AND parent_id= ? and application_id IS null and childId IS NOT NULL";
 
+		Query qry = entityManager.createQuery(hql);
+		qry.setParameter(1, processId);
+		qry.setParameter(2, trtDt);
+		qry.setParameter(3, parentId);
+		if (qry.getResultList() != null && !qry.getResultList().isEmpty())
+			return (Set<WtsNewEtaTab>) qry.getResultList().get(0);
+		else
+			return null;
+
+	}
 	
 	
 }

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -107,6 +108,9 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		return flag;
 	}
 
+	
+	
+	
 	public void newEtaCalculation(WtsAppTab app, int processId) throws ParseException {
 		System.out.println("start time loop entered");
 		String name = app.getName();
@@ -410,9 +414,6 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		Iterator<WtsProcessAppMapTab> apIt = apps.iterator();
 		while (apIt.hasNext()) {
 			WtsProcessAppMapTab nextApp = (WtsProcessAppMapTab) apIt.next();
-			// WtsProcessAppMapTab
-			// nextApp=proAppMapDao.getAllAppMappingsByProcess(processId,
-			// nextApp.getApplicationId());
 			int nextAppSeq = 0;
 			Timestamp startApp = null;
 			Timestamp endDtTime = null;
@@ -438,6 +439,9 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					newEnd = new Timestamp(newEndL);
 					Long newStartL = diff + startApp.getTime();
 					newStart = new Timestamp(newStartL);
+					startProcessTime= new Timestamp(diff+ startProcessTime.getTime());
+					endProcessTime = new Timestamp(diff + endProcessTime.getTime());
+					
 				} else {
 					Long newStartL = fileStartTime;
 					newStart = new Timestamp(newStartL);
@@ -526,6 +530,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					newEnd = new Timestamp(newEndL);
 					Long newStartL = diff + startApp.getTime();
 					newStart = new Timestamp(newStartL);
+					startProcessTime= new Timestamp(diff+ startProcessTime.getTime());
+					endProcessTime = new Timestamp(diff + endProcessTime.getTime());
 				} else {
 					Long newStartL = fileStartTime;
 					newStart = new Timestamp(newStartL);

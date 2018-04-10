@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Application implements Serializable {
-	private int applicationId;
+private int applicationId;
 	private String name;
 	 private int processId;
 	 private int sequence;
@@ -37,6 +37,8 @@ public class Application implements Serializable {
         @JsonProperty("NewETA")
         private Set<WtsNewEtaTab> eta = new HashSet<WtsNewEtaTab>();
         
+        
+	
 	public int getApplicationId() {
 		return applicationId;
 	}

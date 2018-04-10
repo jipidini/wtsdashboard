@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -176,6 +177,19 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			return null;
 
 	}
+	
+	public WtsTransTab getTransactionByParentChildId(int parentId, int processId, String treatDt) {
+		String hql = "from WtsTransTab WHERE parentId=? AND eventDate= ? AND processId=? AND childId=0";
+		Query qry = entityManager.createQuery(hql);
+		qry.setParameter(1, parentId);
+		qry.setParameter(2, treatDt);
+		qry.setParameter(3, processId);
+		if (qry.getResultList() != null && !qry.getResultList().isEmpty())
+			return (WtsTransTab) qry.getResultList().get(0);
+		else
+			return null;
+
+	}
 
 	public WtsTransTab getTransactionByAppIdProIdBatId(int appId, int processid, int batchId, Date treatDt) {
 		String hql = "from WtsTransTab WHERE processId=? AND applicationId=? AND batchId=? AND eventDate= ?";
@@ -204,6 +218,9 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			return null;
 
 	}
+	
+	
+	
 
 	public boolean transactionExistsbyProcessId(int process) {
 		System.out.println("boolean transactionExistsbyProcessId(int Id)");
@@ -634,6 +651,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			if (appMappings != null) {
 				Iterator<WtsAppMappingTab> appssItr = appMappings.iterator();
 				int seq = 0;
+				int childId=0;
 				int mSeq = proAppMapDao.getLastSeq(processObj.getProcessId());
 				while (appssItr.hasNext()) {
 					WtsAppMappingTab wtsAppTab = (WtsAppMappingTab) appssItr.next();
@@ -641,7 +659,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 					if (appseq == 1) {
 						startAppID = wtsAppTab.getChildId();
 						status = WtsTransTabController.STATUS_IN_PROGRESS;
-						WtsTransTab appTxn = this.getTransactionByParentChildId( transa.getChildId(),transa.getParentId(),transa.getProcessId(),
+						WtsTransTab appTxn = this.getTransactionByParentChildId(startAppID,transa.getParentId(),transa.getProcessId(),
 								TreatmentDate.getInstance().getTreatmentDate());
 						if (appTxn != null)
 							transa.setStartTransaction(appTxn.getStartTransaction());
@@ -673,7 +691,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 							endModDtTime = DateUtility.addBufferTime(endDtTime, bufferTime);
 						}
 						status = getFileStatus(startModDTTime, endModDtTime, name);
-						WtsTransTab appTxn = this.getTransactionByAppIdProId(endAppID, transa.getProcessId(),
+						WtsTransTab appTxn = this.getTransactionByParentChildId(endAppID, transa.getProcessId(),
 								TreatmentDate.getInstance().getTreatmentDate());
 						if (appTxn != null) {
 							transa.setEndTransaction(appTxn.getEndTransaction());

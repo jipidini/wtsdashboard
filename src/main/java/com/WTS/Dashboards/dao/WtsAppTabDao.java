@@ -4,9 +4,11 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -15,8 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.WTS.Dashboards.DTO.Application;
 import com.WTS.Dashboards.Entity.WtsAppMappingTab;
 import com.WTS.Dashboards.Entity.WtsAppTab;
+import com.WTS.Dashboards.Entity.WtsNewEtaTab;
 import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 import com.WTS.Dashboards.Entity.WtsTransTab;
+import com.WTS.Dashboards.Utility.TreatmentDate;
 
 @Transactional
 @Repository
@@ -27,6 +31,7 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 	private WtsProcessAppMapTabDao appProcMapDao;
 	@Autowired
 	private WtsAppMappingTabDao appMapDao;
+	
 	
 	
 	public WtsAppTab getAppById(int applicationId) {
@@ -82,8 +87,8 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 			 }
 			 appDTO.setLastUpdateTime(application.getLastUpdateTime());
 			 appDTO.setEnableFlag(application.getEnableFlag());
-			 appDTO.setEta(application.getEta());
-			 appDTO.setTran(application.getTran());
+			 appDTO.setEta(this.getETAProcessTxn(processId,TreatmentDate.getInstance().getTreatmentDate()));
+			 appDTO.setTran(this.getTdyProcessTxn(processId,TreatmentDate.getInstance().getTreatmentDate()));
 		 }
 		 return appDTO;
 	 }
@@ -176,5 +181,60 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 		int seq = (int) entityManager.createQuery(hqls).setParameter(1,processId).getSingleResult();
 		return seq;
 	}
+	
+	public Set<WtsTransTab> getTdyProcessTxn(int processId, String trtDt) {
+		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND parent_id is NULL and application_id IS NOT null and childId IS NULL";
 
+		Query qry = entityManager.createQuery(hql);
+		qry.setParameter(1, processId);
+		qry.setParameter(2, trtDt);
+		if (qry.getResultList() != null && !qry.getResultList().isEmpty())
+			return (Set<WtsTransTab>) qry.getResultList().get(0);
+		else
+			return null;
+
+	}
+	
+	public Set<WtsNewEtaTab> getETAProcessTxn(int processId, String trtDt) {
+		String hql = "from WtsNewEtaTab WHERE processId=? and eventDate= ? AND parent_id is NULL and application_id IS NOT null and childId IS NULL";
+
+		Query qry = entityManager.createQuery(hql);
+		qry.setParameter(1, processId);
+		qry.setParameter(2, trtDt);
+		if (qry.getResultList() != null && !qry.getResultList().isEmpty())
+			return (Set<WtsNewEtaTab>) qry.getResultList().get(0);
+		else
+			return null;
+
+	}
+	
+	public Set<WtsTransTab> getTdyBatchTxn(int processId, String trtDt, int childId) {
+		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND child_id= ? and application_id IS null ";
+
+		Query qry = entityManager.createQuery(hql);
+		qry.setParameter(1, processId);
+		qry.setParameter(2, trtDt);
+		qry.setParameter(3, childId);
+		if (qry.getResultList() != null && !qry.getResultList().isEmpty())
+			return (Set<WtsTransTab>) qry.getResultList().get(0);
+		else
+			return null;
+
+	}
+	
+	public Set<WtsNewEtaTab> getETABatchTxn(int processId, String trtDt,int parentId) {
+		String hql = "from WtsNewEtaTab WHERE processId=? and eventDate= ? AND parent_id= ? and application_id IS null and childId IS NOT NULL";
+
+		Query qry = entityManager.createQuery(hql);
+		qry.setParameter(1, processId);
+		qry.setParameter(2, trtDt);
+		qry.setParameter(3, parentId);
+		if (qry.getResultList() != null && !qry.getResultList().isEmpty())
+			return (Set<WtsNewEtaTab>) qry.getResultList().get(0);
+		else
+			return null;
+
+	}
+	
+	
 }

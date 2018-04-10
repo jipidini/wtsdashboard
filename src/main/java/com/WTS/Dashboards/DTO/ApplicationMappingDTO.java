@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ApplicationMappingDTO implements Serializable {
 	 private int parentId;  
+	
 		
 	    private String name;
 		
@@ -35,7 +36,11 @@ public class ApplicationMappingDTO implements Serializable {
 	    @JsonProperty("Applications")
 		 private Set<Application> applications = new HashSet<Application>();
 		
-		public int getParentId() {
+		
+		
+		
+		
+		public int getParenId() {
 			return parentId;
 		}
 		public void setParentId(int parentId) {
