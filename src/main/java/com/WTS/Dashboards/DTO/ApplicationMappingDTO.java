@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
+import com.WTS.Dashboards.Entity.WtsTransTab;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -37,7 +38,9 @@ public class ApplicationMappingDTO implements Serializable {
 		 private Set<Application> applications = new HashSet<Application>();
 		
 		
-		
+	    @JsonProperty("Transactions")
+	    private Set<WtsTransTab> tran = new HashSet<WtsTransTab>();
+	    
 		
 		
 		public int getParenId() {
@@ -105,6 +108,15 @@ public class ApplicationMappingDTO implements Serializable {
 		}
 		public void setApplications(Set<Application> applications) {
 			this.applications = applications;
+		}
+		public Set<WtsTransTab> getTran() {
+			return tran;
+		}
+		public void setTran(Set<WtsTransTab> tran) {
+			this.tran = tran;
+		}
+		public int getParentId() {
+			return parentId;
 		}
 	    
 }

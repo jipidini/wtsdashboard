@@ -75,6 +75,9 @@ public class WtsProcessTabDao implements IWtsDaoInterface {
 	
 	
 	public List<ApplicationMappingDTO> getAllDTOsForApplication(int applicationId, int processId, int parentId) {
+		boolean isprocessFetch=false;
+		if(parentId==0)
+			isprocessFetch=true;
 		List<ApplicationMappingDTO> processDTOs= new ArrayList<ApplicationMappingDTO>();
 		ApplicationMappingDTO DTO= new ApplicationMappingDTO();
 		WtsAppTab parentApp=appDao.getAppById(applicationId);
@@ -112,6 +115,31 @@ public class WtsProcessTabDao implements IWtsDaoInterface {
 			}
 		}
 		DTO.setApplications(childrens);
+		if(isprocessFetch) {
+			 Set etas=new HashSet<>();
+			 List etaList=appDao.getETAApplicationTxn(processId,applicationId,TreatmentDate.getInstance().getTreatmentDate());
+				if(etaList!=null)
+				 etas.addAll(etaList);
+				DTO.setEta(etas);
+			 Set trans=new HashSet<>();
+			 List transList=appDao.getTdyApplicationTxn(processId,applicationId,TreatmentDate.getInstance().getTreatmentDate());
+			 if(transList!=null)
+			 trans.addAll(transList);
+			 DTO.setTran(trans);
+		}else {
+			Set etas=new HashSet<>();
+			 List etaList=appDao.getETAChildTxn(processId,parentId,applicationId,TreatmentDate.getInstance().getTreatmentDate());
+				if(etaList!=null)
+				 etas.addAll(etaList);
+				DTO.setEta(etas);
+			 Set trans=new HashSet<>();
+			 List transList=appDao.getTdyChildTxn(processId,parentId,applicationId,TreatmentDate.getInstance().getTreatmentDate());
+			 if(transList!=null)
+			 trans.addAll(transList);
+			 DTO.setTran(trans);
+		}
+		
+		
 		processDTOs.add(DTO);
 			return processDTOs;
 	}
@@ -154,7 +182,16 @@ public class WtsProcessTabDao implements IWtsDaoInterface {
 			dto.setEta(processDB.getEta());
 			dto.setEta(processDB.getEta());
 			dto.setApplications(convertApplicationDTO(appDao.getAllAppsByProcess(processDB.getProcessId()),processDB.getProcessId()));
-			 
+			 Set etas=new HashSet<>();
+			 List etaList=appDao.getETAProcessTxn(processDB.getProcessId(),TreatmentDate.getInstance().getTreatmentDate());
+				if(etaList!=null)
+				 etas.addAll(etaList);
+				dto.setEta(etas);
+			 Set trans=new HashSet<>();
+			 List transList=appDao.getTdyProcessTxn(processDB.getProcessId(),TreatmentDate.getInstance().getTreatmentDate());
+			 if(transList!=null)
+			 trans.addAll(transList);
+			 dto.setTran(trans);
 		}
 		return dto;
 	}

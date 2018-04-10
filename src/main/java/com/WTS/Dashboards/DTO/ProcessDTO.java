@@ -12,6 +12,7 @@ import javax.persistence.OneToMany;
 
 import com.WTS.Dashboards.Entity.WtsAppTab;
 import com.WTS.Dashboards.Entity.WtsNewEtaTab;
+import com.WTS.Dashboards.Entity.WtsTransTab;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -40,6 +41,17 @@ public class ProcessDTO implements Serializable {
 	    private Set<WtsNewEtaTab> eta = new HashSet<WtsNewEtaTab>();
 	    @JsonProperty("Applications")
 		 private Set<Application> applications = new HashSet<Application>();
+	    
+	    @JsonProperty("Transactions")
+	    private Set<WtsTransTab> tran = new HashSet<WtsTransTab>();
+	    
+	    
+		public Set<WtsTransTab> getTran() {
+			return tran;
+		}
+		public void setTran(Set<WtsTransTab> tran) {
+			this.tran = tran;
+		}
 		public int getProcessId() {
 			return processId;
 		}
