@@ -431,6 +431,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			transa.setStatusId(status);
 			Timestamp refstartTime=processDAO.getProcessStartTime(transa.getProcessId());
 			Timestamp refEndTime=processDAO.getProcessEndTime(transa.getProcessId());
+			System.out.println("ProcessStatus------->"+getProcessButtonStatus(transa.getProcessId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
 			transa.setProcessStatus(getProcessButtonStatus(transa.getProcessId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
 		}
 
