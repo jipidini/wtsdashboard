@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -32,6 +35,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 
 	@PersistenceContext
 	private EntityManager entityManager;
+	@Autowired
+	private EntityManagerFactory emf;
 
 	@Autowired
 	private WtsAppTabDao appDAO;
@@ -96,6 +101,64 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 
 	}
 
+	
+	
+	public void forceInsertOrUpdateEta(WtsNewEtaTab newObj) {
+		EntityManager em = emf.createEntityManager();
+	    EntityTransaction tx = em.getTransaction();
+	    tx.begin();
+		String hql =null;
+		Query qry=null;
+		if(newObj.getEtaId()>0) {
+			StringBuilder hqlBuilder = new StringBuilder();
+			
+			hqlBuilder.append("UPDATE  wts_new_eta_tab SET event_date = ?, process_id = ?,parent_id = ?,");
+			hqlBuilder.append("child_id = ?,application_id = ?,");
+			hqlBuilder.append("new_eta_start_transaction = ?,new_eta_end_transaction = ?,each_problem_flag =?"); 
+			hqlBuilder.append(" WHERE eta_id = ?");
+			qry=em.createNativeQuery(hqlBuilder.toString());
+			qry.setParameter(1, newObj.getEventDate());
+			qry.setParameter(2, newObj.getProcessId());
+			qry.setParameter(3, newObj.getParentId());
+			qry.setParameter(4, newObj.getChildId());
+			qry.setParameter(5, newObj.getApplicationId());
+			qry.setParameter(6, newObj.getNewEtaStartTransaction());
+			qry.setParameter(7, newObj.getNewEtaEndTransaction());
+			qry.setParameter(8, newObj.getProblemFlag());
+			qry.setParameter(9, newObj.getEtaId());
+		}else {
+			StringBuilder hqlBuilder = new StringBuilder();
+			hqlBuilder.append("INSERT INTO wts_new_eta_tab(event_date,process_id,parent_id,child_id,application_id,new_eta_start_transaction,new_eta_end_transaction,each_problem_flag) VALUES(");
+			hqlBuilder.append("?,");
+			hqlBuilder.append("?,");
+			hqlBuilder.append("?,");
+			hqlBuilder.append("?,");
+			hqlBuilder.append("?,");
+			hqlBuilder.append("?,");
+			hqlBuilder.append("?,");
+			hqlBuilder.append("?");
+			hqlBuilder.append(")");
+		
+			qry=em.createNativeQuery(hqlBuilder.toString());
+			qry.setParameter(1, newObj.getEventDate());
+			qry.setParameter(2, newObj.getProcessId());
+			qry.setParameter(3, newObj.getParentId());
+			qry.setParameter(4, newObj.getChildId());
+			qry.setParameter(5, newObj.getApplicationId());
+			qry.setParameter(6, newObj.getNewEtaStartTransaction());
+			qry.setParameter(7, newObj.getNewEtaEndTransaction());
+			qry.setParameter(8, newObj.getProblemFlag());
+			
+			
+		}
+		
+		if(qry!=null) {
+			qry.executeUpdate();
+		}
+		 tx.commit();
+		 em.close();
+	}
+	
 	public int isProblemFlag() {
 		int flag = 0;
 		String hql = "select problemFlag FROM WtsNewEtaTab where eventDate= current_date";
@@ -183,7 +246,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 
 		String name = childApp.getName();
 
-		List<WtsNewEtaTab> etaLst = new ArrayList<>();
+		
 		Timestamp startDTTime = null;
 		Timestamp endDTTime = null;
 		int buf = 0;
@@ -233,30 +296,28 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		List<WtsAppMappingTab> apps = appMapDao.getAllAppMappingsByParent(parentId, processId);
 
 		// start Change case
-		if (startDiff > 0) {
-			this.updateDifferenceETA(startDiff, origDiff, etaLst, apps, startProcessTime, endProcessTime,
-					fileStart.getTime(), parentId, processId, false,currentSeq);
-
-		}
+		
 		if (endDiff > 0) {
-			this.updateDifferenceETA(endDiff, origDiff, etaLst, apps, startProcessTime, endProcessTime,
+			this.updateDifferenceETA(endDiff, origDiff, apps, startProcessTime, endProcessTime,
 					fileStart.getTime(), parentId, processId, true,currentSeq);
-			
-			
+
+		}else if (startDiff > 0) {
+			this.updateDifferenceETA(startDiff, origDiff, apps, startProcessTime, endProcessTime,
+					fileStart.getTime(), parentId, processId, false,currentSeq);
 
 		}
 		entityManager.flush();
 		// System.out.println("new start time is "+fileStart);
 		System.out.println("ETA set for start transations..");
 	}
-
-	public void updateDifferenceETA(Long diff, Long origDiff, List<WtsNewEtaTab> etaLst, List<WtsAppMappingTab> apps,
+	@Transactional
+	public void updateDifferenceETA(Long diff, Long origDiff, List<WtsAppMappingTab> apps,
 			Timestamp startParentTime, Timestamp endParentTime, Long fileStartTime, int parentId,
 			int processId, boolean endFlow,int currentSeq) {
 
 		Iterator<WtsAppMappingTab> apIt = apps.iterator();
 		int buf = 0;
-
+		boolean persist=false;
 
 		while (apIt.hasNext()) {
 			WtsAppMappingTab nextApp = (WtsAppMappingTab) apIt.next();
@@ -270,14 +331,13 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				buf = nextApp.getBufferTime();
 				nextAppSeq = nextApp.getSequence();
 			}
-			if (nextAppSeq > currentSeq) {
 
-				this.addNewETAForApps(diff, etaLst, nextApp);
-			} else if (nextAppSeq == currentSeq) {
-				WtsNewEtaTab et = getTdyETATxnByParentChildID(nextApp.getParentId(), nextApp.getChildId(),
+			if (nextAppSeq == currentSeq) {
+				WtsNewEtaTab curObj = getTdyETATxnByParentChildID(nextApp.getParentId(), nextApp.getChildId(),
 						nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
-				if (et == null) {
-					et = new WtsNewEtaTab();
+				if (curObj == null) {
+					curObj = new WtsNewEtaTab();
+					persist=true;
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
@@ -294,62 +354,322 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					newEnd = new Timestamp(newEndL);
 					endParentTime = new Timestamp(diff + endParentTime.getTime());
 				}
-				et.setNewEtaEndTransaction(newEnd);
-				et.setNewEtaStartTransaction(newStart);
-				et.setParentId(nextApp.getParentId());
-				et.setChildId(nextApp.getChildId());
-				et.setProcessId(nextApp.getProcessId());
-				et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
-				et.setProblemFlag(1);
-//				etaLst.add(et);
-				this.etaListUpdateWithNoDuplicate(etaLst, et);
-
-			}
-
-		}
-		// update parent ETA
-		WtsNewEtaTab exist_proc_eta = getTdyETATxnByParentId(parentId, processId,
-				TreatmentDate.getInstance().getTreatmentDate());
-		if (exist_proc_eta == null) {
-			exist_proc_eta = new WtsNewEtaTab();
-		}
-
-		exist_proc_eta.setProcessId(processId);
-		exist_proc_eta.setParentId(parentId);
-		exist_proc_eta.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
-		exist_proc_eta.setProblemFlag(0);
-		endParentTime = new Timestamp(diff + endParentTime.getTime());
-		exist_proc_eta.setNewEtaEndTransaction(endParentTime);
-		exist_proc_eta.setNewEtaStartTransaction(startParentTime);
-		this.etaListUpdateWithNoDuplicate(etaLst, exist_proc_eta);
-//		etaLst.add(exist_proc_eta);
+				curObj.setNewEtaEndTransaction(newEnd);
+				curObj.setNewEtaStartTransaction(newStart);
+				curObj.setParentId(nextApp.getParentId());
+				curObj.setChildId(nextApp.getChildId());
+				curObj.setProcessId(nextApp.getProcessId());
+				curObj.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+				curObj.setProblemFlag(1);
 		
-		int parentSeq=proAppMapDao.getAppMappingSequence(processId, parentId);
-		Timestamp startProcessTime=processDAO.getProcessStartTime(processId);
-		Timestamp endProcessTime=processDAO.getProcessEndTime(processId);
-		List<WtsProcessAppMapTab> parentProcesses=proAppMapDao.getAllAppMappingsForProcess(processId);
-		if(parentProcesses!=null && !parentProcesses.isEmpty()) {
-			Iterator<WtsProcessAppMapTab> procItr=parentProcesses.iterator();
-			while (procItr.hasNext()) {
-				WtsProcessAppMapTab wtsProcessAppMapTab = (WtsProcessAppMapTab) procItr.next();
-				etaLst=this.updateDifferencePROCESSETAForOneApp(diff, origDiff, etaLst, wtsProcessAppMapTab, startProcessTime, endProcessTime, fileStartTime, processId, endFlow,parentSeq);
+			    
+				this.forceInsertOrUpdateEta(curObj);
+				
+				
+				prepareParentETAs(nextApp.getParentId(),nextApp.getProcessId(),nextApp.getChildId(),currentSeq,diff,endFlow,fileStartTime);
+				prepareChildETAs(nextApp.getParentId(),nextApp.getProcessId(),nextApp.getChildId(),currentSeq,diff,endFlow,fileStartTime);
+				entityManager.flush();
 			}
-			
-			
-			
-		}
-		
 
-		if (!etaLst.isEmpty()) {
-			Iterator<WtsNewEtaTab> etaItr = etaLst.iterator();
-			while (etaItr.hasNext()) {
-				WtsNewEtaTab wtsNewEtaTab = (WtsNewEtaTab) etaItr.next();
-				addNewEta(wtsNewEtaTab);
-			}
 		}
+	
 
 	}
 
+	@Transactional
+	private void prepareChildETAs(int parentId, int processId, int childId, int currentSeq, Long diff, boolean endFlow, Long fileStartTime) {
+		
+		//immidiate beow children
+		List<WtsAppMappingTab> immChildMappings= appMapDao.getImmediateChildAppMappings(parentId, processId, currentSeq);
+		if(immChildMappings!=null && !immChildMappings.isEmpty()) {
+			Iterator<WtsAppMappingTab> chlItr=immChildMappings.iterator();
+			while (chlItr.hasNext()) {
+				boolean persist=false;
+				WtsAppMappingTab wtsAppMappingTab = (WtsAppMappingTab) chlItr.next();
+				Timestamp oldstartTime = null;
+				Timestamp oldendDtTime = null;
+				Long origDiff = Long.valueOf(0);
+				if (wtsAppMappingTab != null) {
+					oldstartTime = wtsAppMappingTab.getStartTime();
+					oldendDtTime = wtsAppMappingTab.getEndTime();
+					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
+				}
+				
+				WtsNewEtaTab et = getTdyETATxnByParentChildID(parentId,wtsAppMappingTab.getChildId(), processId, TreatmentDate.getInstance().getTreatmentDate());
+				if (et == null) {
+					et = new WtsNewEtaTab();
+					persist=true;
+				}
+				Timestamp newEnd = null;
+				Timestamp newStart = null;
+				if (!endFlow) {
+					Long newStartL = diff +oldstartTime.getTime();
+					newStart = new Timestamp(newStartL);
+					Long newEndL = origDiff + newStartL;
+					newEnd = new Timestamp(newEndL);
+				} else {
+					Long newStartL = diff +oldstartTime.getTime();
+					newStart = new Timestamp(newStartL);
+					Long newEndL = origDiff + oldendDtTime.getTime();
+					newEnd = new Timestamp(newEndL);
+				}
+				et.setNewEtaEndTransaction(newEnd);
+				et.setNewEtaStartTransaction(newStart);
+				et.setParentId(parentId);
+				et.setChildId(wtsAppMappingTab.getChildId());
+				et.setProcessId(processId);
+				et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+				et.setProblemFlag(1);
+				this.forceInsertOrUpdateEta(et);
+				entityManager.flush();
+				
+				
+				
+			}
+		}
+		
+		//Parent siblings
+		List<WtsProcessAppMapTab> procHigherMapping=proAppMapDao.getAllHigherAppMappingsByProcess(processId, parentId);
+		if(procHigherMapping!=null && !procHigherMapping.isEmpty()) {
+			Iterator<WtsProcessAppMapTab> proItr=procHigherMapping.iterator();
+			while (proItr.hasNext()) {
+				boolean persist=false;
+				WtsProcessAppMapTab wtsProcessAppMapTab = (WtsProcessAppMapTab) proItr.next();
+				Timestamp oldstartTime = null;
+				Timestamp oldendDtTime = null;
+				Long origDiff = Long.valueOf(0);
+				if (wtsProcessAppMapTab != null) {
+					oldstartTime = wtsProcessAppMapTab.getStartTime();
+					oldendDtTime = wtsProcessAppMapTab.getEndTime();
+					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
+				}
+				
+				WtsNewEtaTab et = getTdyETATxnByParentId(wtsProcessAppMapTab.getApplicationId(), processId, TreatmentDate.getInstance().getTreatmentDate());
+				if (et == null) {
+					et = new WtsNewEtaTab();
+					persist=true;
+				}
+				Timestamp newEnd = null;
+				Timestamp newStart = null;
+				if (!endFlow) {
+					Long newStartL = diff +oldstartTime.getTime();
+					newStart = new Timestamp(newStartL);
+					Long newEndL = origDiff + newStartL;
+					newEnd = new Timestamp(newEndL);
+				} else {
+					Long newStartL = diff +oldstartTime.getTime();
+					newStart = new Timestamp(newStartL);
+					Long newEndL = origDiff + oldendDtTime.getTime();
+					newEnd = new Timestamp(newEndL);
+				}
+				et.setNewEtaEndTransaction(newEnd);
+				et.setNewEtaStartTransaction(newStart);
+				et.setParentId(wtsProcessAppMapTab.getApplicationId());
+				et.setProcessId(processId);
+				et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+				et.setProblemFlag(1);
+				this.forceInsertOrUpdateEta(et);
+				persist=false;
+				//update equivalent app ETA record..
+				WtsNewEtaTab topET = getTdyETATxnByProcessIdAppID(wtsProcessAppMapTab.getApplicationId(), processId,  TreatmentDate.getInstance().getTreatmentDate());
+				if (topET == null) {
+					topET = new WtsNewEtaTab();
+					persist=true;
+				}
+			
+				if (!endFlow) {
+					Long newStartL = diff +oldstartTime.getTime();
+					newStart = new Timestamp(newStartL);
+					Long newEndL = origDiff + newStartL;
+					newEnd = new Timestamp(newEndL);
+				} else {
+					Long newStartL = diff +oldstartTime.getTime();
+					newStart = new Timestamp(newStartL);
+					Long newEndL = origDiff + oldendDtTime.getTime();
+					newEnd = new Timestamp(newEndL);
+				}
+				topET.setNewEtaEndTransaction(newEnd);
+				topET.setNewEtaStartTransaction(newStart);
+				topET.setApplicationId(wtsProcessAppMapTab.getApplicationId());
+				topET.setProcessId(processId);
+				topET.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+				topET.setProblemFlag(1);
+				this.forceInsertOrUpdateEta(topET);
+				
+				//fetch all childs of it and update
+				List<WtsAppMappingTab> siblingChildMappings=appMapDao.getAllAppMappingsByParent(wtsProcessAppMapTab.getApplicationId(), processId);
+				if(siblingChildMappings!=null && !siblingChildMappings.isEmpty()) {
+					Iterator<WtsAppMappingTab> sibItr=siblingChildMappings.iterator();
+					while (sibItr.hasNext()) {
+						WtsAppMappingTab wtsAppMappingTab = (WtsAppMappingTab) sibItr.next();
+						persist=false;
+						
+						if (wtsAppMappingTab != null) {
+							oldstartTime = wtsAppMappingTab.getStartTime();
+							oldendDtTime = wtsAppMappingTab.getEndTime();
+							origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
+						}
+						
+						WtsNewEtaTab childETA = getTdyETATxnByParentChildID(wtsAppMappingTab.getParentId(),wtsAppMappingTab.getChildId(), processId, TreatmentDate.getInstance().getTreatmentDate());
+						if (childETA == null) {
+							childETA = new WtsNewEtaTab();
+							persist=true;
+						}
+						
+						if (!endFlow) {
+							Long newStartL = diff +oldstartTime.getTime();
+							newStart = new Timestamp(newStartL);
+							Long newEndL = origDiff + newStartL;
+							newEnd = new Timestamp(newEndL);
+						} else {
+							Long newStartL = diff +oldstartTime.getTime();
+							newStart = new Timestamp(newStartL);
+							Long newEndL = origDiff + oldendDtTime.getTime();
+							newEnd = new Timestamp(newEndL);
+						}
+						childETA.setNewEtaEndTransaction(newEnd);
+						childETA.setNewEtaStartTransaction(oldstartTime);
+						childETA.setParentId(wtsAppMappingTab.getParentId());
+						childETA.setChildId(wtsAppMappingTab.getChildId());
+						childETA.setProcessId(processId);
+						childETA.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+						childETA.setProblemFlag(1);
+						this.forceInsertOrUpdateEta(childETA);
+					}
+				}
+				
+			}
+		}
+		
+		
+	}
+
+	
+	
+	@Transactional
+	private void prepareParentETAs(int parentId, int processId, int childId, int currentSeq, Long diff, boolean endFlow, Long fileStartTime) {
+		
+		List<WtsProcessAppMapTab> procHigherMapping=proAppMapDao.getAllLowerAppMappingsByProcess(processId, parentId);
+		if(procHigherMapping!=null && !procHigherMapping.isEmpty()) {
+			Iterator<WtsProcessAppMapTab> proItr=procHigherMapping.iterator();
+			while (proItr.hasNext()) {
+				boolean persist=false;
+				WtsProcessAppMapTab wtsProcessAppMapTab = (WtsProcessAppMapTab) proItr.next();
+				Timestamp oldstartTime = null;
+				Timestamp oldendDtTime = null;
+				Long origDiff = Long.valueOf(0);
+				if (wtsProcessAppMapTab != null) {
+					oldstartTime = wtsProcessAppMapTab.getStartTime();
+					oldendDtTime = wtsProcessAppMapTab.getEndTime();
+					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
+				}
+				
+				WtsNewEtaTab et = getTdyETATxnByParentId(wtsProcessAppMapTab.getApplicationId(), processId, TreatmentDate.getInstance().getTreatmentDate());
+				if (et == null) {
+					et = new WtsNewEtaTab();
+					persist=true;
+				}
+				Timestamp newEnd = null;
+				Timestamp newStart = null;
+				if (!endFlow) {
+					Long newStartL = fileStartTime;
+					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
+						newStartL = oldstartTime.getTime();
+					newStart = new Timestamp(newStartL);
+					Long newEndL = origDiff + newStartL;
+					newEnd = new Timestamp(newEndL);
+				} else {
+					Long newStartL = fileStartTime;
+					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
+						newStartL = oldstartTime.getTime();
+					newStart = new Timestamp(newStartL);
+					Long newEndL = origDiff + oldendDtTime.getTime();
+					newEnd = new Timestamp(newEndL);
+				}
+				et.setNewEtaEndTransaction(newEnd);
+				et.setNewEtaStartTransaction(newStart);
+				et.setParentId(wtsProcessAppMapTab.getApplicationId());
+				et.setProcessId(processId);
+				et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+				et.setProblemFlag(1);
+				this.forceInsertOrUpdateEta(et);
+				 persist=false;
+				WtsNewEtaTab topET = getTdyETATxnByProcessIdAppID(wtsProcessAppMapTab.getApplicationId(), processId,  TreatmentDate.getInstance().getTreatmentDate());
+				if (topET == null) {
+					topET = new WtsNewEtaTab();
+					persist=true;
+				}
+			
+//				if (!endFlow) {
+//					Long newStartL = fileStartTime;
+//					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
+//						newStartL = oldstartTime.getTime();
+//					newStart = new Timestamp(newStartL);
+//					Long newEndL = origDiff + newStartL;
+//					newEnd = new Timestamp(newEndL);
+//				} else {
+//					Long newStartL = fileStartTime;
+//					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
+//						newStartL = oldstartTime.getTime();
+//					newStart = new Timestamp(newStartL);
+//					Long newEndL = origDiff + oldendDtTime.getTime();
+//					newEnd = new Timestamp(newEndL);
+//				}
+				topET.setNewEtaEndTransaction(newEnd);
+				topET.setNewEtaStartTransaction(newStart);
+				topET.setApplicationId(wtsProcessAppMapTab.getApplicationId());
+				topET.setProcessId(processId);
+				topET.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+				topET.setProblemFlag(1);
+				this.forceInsertOrUpdateEta(topET);
+				
+			}
+			
+			
+		}
+		
+		boolean  persist=false;
+		Timestamp newEnd = null;
+		Timestamp newStart = null;
+		Timestamp oldstartTime = null;
+		Timestamp oldendDtTime = null;
+		WtsProcessTab procObj=processDAO.getProcessById(processId);
+		Long origDiff = Long.valueOf(0);
+		
+		if (procObj != null) {
+			oldstartTime = procObj.getExpectedStartTime();
+			oldendDtTime = procObj.getExpectedEndTime();
+			origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
+		}
+		WtsNewEtaTab procET = getTdyETATxnByProcessId(processId,  TreatmentDate.getInstance().getTreatmentDate());
+		if (procET == null) {
+			procET = new WtsNewEtaTab();
+			persist=true;
+		}
+		if (!endFlow) {
+			Long newStartL = fileStartTime;
+			newStart = new Timestamp(newStartL);
+			Long newEndL = origDiff+newStartL;
+			newEnd = new Timestamp(newEndL);
+		} else {
+			Long newStartL = fileStartTime;
+			newStart = new Timestamp(newStartL);
+			Long newEndL = origDiff+oldendDtTime.getTime();
+			newEnd = new Timestamp(newEndL);
+		}
+		procET.setNewEtaEndTransaction(newEnd);
+		procET.setNewEtaStartTransaction(oldstartTime);
+		procET.setParentId(0);
+		procET.setChildId(0);
+		procET.setApplicationId(0);
+		procET.setProcessId(processId);
+		procET.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+		procET.setProblemFlag(1);
+		this.forceInsertOrUpdateEta(procET);
+		entityManager.flush();
+
+	}
+	
 	
 	public List<WtsNewEtaTab> updateDifferenceETAForOneApp(Long diff, Long origDiff, List<WtsNewEtaTab> etaLst, WtsAppMappingTab nextApp,
 			Timestamp startParentTime, Timestamp endParentTime, Long fileStartTime, int parentId,
@@ -1197,7 +1517,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 
 	public WtsNewEtaTab getTdyETATxnByProcessIdAppID(int appId, int processid, String treatDt) {
 
-		String hql = "from WtsNewEtaTab WHERE processId=? AND applicationId=? AND eventDate= ?";
+		String hql = "from WtsNewEtaTab WHERE processId=? AND applicationId=? AND eventDate= ? AND parentId=0 and childId=0";
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processid);
 		qry.setParameter(2, appId);

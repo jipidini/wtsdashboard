@@ -86,6 +86,17 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 	   return null;
 	}
 	
+	public List<WtsAppMappingTab> getImmediateChildAppMappings(int parentId, int processId,int currSeq) {
+
+		   String hql="FROM WtsAppMappingTab as app WHERE app.parentId=:parent and app.processId=:processId and app.sequence >"+currSeq;
+		   
+		 List <WtsAppMappingTab> ls=entityManager.createQuery(hql).setParameter("parent",parentId).setParameter("processId",processId).getResultList();
+		  if(ls!=null && !ls.isEmpty())
+			  return ls;
+		  else
+	   return null;
+	}
+	
 	
 	public List<WtsAppMappingTab> getAllAppMappingsByParent(int parentId, int processId) {
 		 System.out.println("parentId"+parentId);

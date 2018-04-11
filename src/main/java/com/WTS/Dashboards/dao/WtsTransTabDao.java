@@ -289,7 +289,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			}
 			String name=appln.getName();
 			int status = getFileStatus(startModDTTime, endModDtTime, name);
-			boolean etaCalculated=false;
+			/*boolean etaCalculated=false;
 			WtsTransTab existtrans = getTdyTxnByProcessIdAppId(transa.getProcessId(),
 					TreatmentDate.getInstance().getTreatmentDate(), appln.getApplicationId());
 			if (existtrans != null && existtrans.getStatusId() == WtsTransTabController.STATUS_FAILURE
@@ -309,7 +309,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 					// UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
 					this.updateNewETA(transa.getProcessId(), existtrans.getApplicationId(), true);
 				etaCalculated=true;
-			}
+			}*/
 
 			System.out.println("getFileStatus function checked and status set");
 
@@ -345,10 +345,10 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 				}
 			}
 
-			if(!etaCalculated && etDAO.isETAExistsForProcessAndApp(transa.getProcessId(),transa.getApplicationId())) {
+			/*if(!etaCalculated && etDAO.isETAExistsForProcessAndApp(transa.getProcessId(),transa.getApplicationId())) {
 				this.refreshETA(transa.getProcessId(), existtrans.getApplicationId(), false);
 			}
-			
+			*/
 			// applicationBUttonStatus Logic
 			
 						Timestamp refstartTime=appMapDao.getAppMappingStartTime(transa.getProcessId(), transa.getApplicationId());
