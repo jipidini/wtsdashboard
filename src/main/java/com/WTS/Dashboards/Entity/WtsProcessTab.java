@@ -51,7 +51,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 		@Column(name="enable_flag")
 		private int enableFlag;
 		
-	
+		
 	
 		@OneToMany(fetch = FetchType.EAGER, mappedBy = "processId")
 		@JsonProperty("NewProcessETA")

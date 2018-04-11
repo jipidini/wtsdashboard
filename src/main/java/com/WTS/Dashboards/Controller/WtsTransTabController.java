@@ -90,7 +90,7 @@ public class WtsTransTabController {
 		
 		List  finalList=trs.fetchAllChildTxns(parentId,processId,mainpageNav);
 		finalList.addAll(etaDAO.getAllChildEta(parentId,processId));
-//	 trs.EtaMail(parentId);
+	 trs.EtaMail(parentId);
 	 return new ResponseEntity<List <WtsTransTab>>(finalList,HttpStatus.OK);
 		
 	}

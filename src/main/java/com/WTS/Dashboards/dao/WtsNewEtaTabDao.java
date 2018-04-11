@@ -157,7 +157,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 
 		List<WtsProcessAppMapTab> apps = proAppMapDao.getAllAppMappingsForProcess(processId);
 
-		// start Change case
+		
 		if (startDiff > 0) {
 			this.updateDifferencePROCESSETA(startDiff, origDiff, etaLst, apps, startProcessTime, endProcessTime,
 					fileStart.getTime(), processId, false,currentSeq);
@@ -307,7 +307,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			}
 
 		}
-		// update process ETA
+		// update parent ETA
 		WtsNewEtaTab exist_proc_eta = getTdyETATxnByParentId(parentId, processId,
 				TreatmentDate.getInstance().getTreatmentDate());
 		if (exist_proc_eta == null) {
@@ -744,7 +744,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Timestamp newEnd = new Timestamp(newEndL);
 					Long newStartL = startDiff + startappTime.getTime();
 					Timestamp newStart = new Timestamp(newStartL);
-					if(newStart.after(endDtTime)){
+					if(newStart.after(startappTime)){
                         et.setNewEtaEndTransaction(newEnd);  
                         et.setNewEtaStartTransaction(newStart);
                         }
@@ -771,7 +771,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Long newEndL = origDiff + newStartL;
 					Timestamp newEnd = new Timestamp(newEndL);
 					endProcessTime = new Timestamp(startDiff + endProcessTime.getTime());
-					if(newStart.after(endDtTime)){
+					if(newStart.after(startappTime)){
                         et.setNewEtaEndTransaction(newEnd);  
                         et.setNewEtaStartTransaction(newStart);
                         }
@@ -1001,8 +1001,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Timestamp newEnd = new Timestamp(newEndL);
 					Long newStartL = startDiff + startappTime.getTime();
 					Timestamp newStart = new Timestamp(newStartL);
-					et.setNewEtaEndTransaction(newEnd);
-					et.setNewEtaStartTransaction(newStart);
+					if(newStart.after(startappTime)){
+                        et.setNewEtaEndTransaction(newEnd);  
+                        et.setNewEtaStartTransaction(newStart);
+                        }
+                        else {
+                               et.setNewEtaEndTransaction(endDtTime);
+                               et.setNewEtaStartTransaction(startappTime);
+                        }
 //					etaLst.add(et);
 					this.etaListUpdateWithNoDuplicate(etaLst, et);
 
@@ -1017,8 +1023,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Long newEndL = origDiff + newStartL;
 					Timestamp newEnd = new Timestamp(newEndL);
 					endProcessTime = new Timestamp(startDiff + endProcessTime.getTime());
-					et.setNewEtaEndTransaction(newEnd);
-					et.setNewEtaStartTransaction(newStart);
+					if(newStart.after(startappTime)){
+                        et.setNewEtaEndTransaction(newEnd);  
+                        et.setNewEtaStartTransaction(newStart);
+                        }
+                        else {
+                               et.setNewEtaEndTransaction(endDtTime);
+                               et.setNewEtaStartTransaction(startappTime);
+                        }
 //					etaLst.add(et);
 					this.etaListUpdateWithNoDuplicate(etaLst, et);
 
@@ -1075,8 +1087,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Timestamp newStart = new Timestamp(newStartL);
 					Long newEndL = endDiff + endDtTime.getTime();
 					Timestamp newEnd = new Timestamp(newEndL);
-					et.setNewEtaEndTransaction(newEnd);
-					et.setNewEtaStartTransaction(newStart);
+					if(newEnd.after(endDtTime)){
+                        et.setNewEtaEndTransaction(newEnd);  
+                        et.setNewEtaStartTransaction(newStart);
+                        }
+                        else {
+                               et.setNewEtaEndTransaction(endDtTime);
+                               et.setNewEtaStartTransaction(startApp);
+                        }
 //					etaLst.add(et);
 					this.etaListUpdateWithNoDuplicate(etaLst, et);
 
@@ -1092,8 +1110,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Long newEndL = endDiff + endDtTime.getTime();
 					Timestamp newEnd = new Timestamp(newEndL);
 					endProcessTime = new Timestamp(endDiff + endProcessTime.getTime());
-					et.setNewEtaEndTransaction(newEnd);
-					et.setNewEtaStartTransaction(newStart);
+					if(newEnd.after(endDtTime)){
+                        et.setNewEtaEndTransaction(newEnd);  
+                        et.setNewEtaStartTransaction(newStart);
+                        }
+                        else {
+                               et.setNewEtaEndTransaction(endDtTime);
+                               et.setNewEtaStartTransaction(startApp);
+                        }
 //					etaLst.add(et);
 					this.etaListUpdateWithNoDuplicate(etaLst, et);
 				}

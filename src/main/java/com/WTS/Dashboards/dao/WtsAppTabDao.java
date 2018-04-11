@@ -202,7 +202,7 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 	}
 	
 	public List<WtsTransTab> getTdyApplicationTxn(int processId,int appId, String trtDt) {
-		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND parent_id is NULL and application_id=? and childId IS NULL";
+		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND application_id is NULL and parent_id=? and childId IS NULL";
 
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processId);

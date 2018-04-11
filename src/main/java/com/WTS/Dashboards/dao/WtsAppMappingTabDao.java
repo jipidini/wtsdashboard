@@ -127,4 +127,10 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 		int count = entityManager.createQuery(hql).setParameter(1, name).getResultList().size();
 		return count > 0 ? true : false;
 	}
+	
+	public int getLastSeq(int processId,int parentId) {
+		String hqls= "select max(sequence) from WtsAppMappingTab where processId=? and parentId=?";
+		int seq = (int) entityManager.createQuery(hqls).setParameter(1,processId).setParameter(2,parentId).getSingleResult();
+		return seq;
+	}
 }
