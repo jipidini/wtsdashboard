@@ -65,7 +65,8 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 	public void addApp(WtsAppTab application) {
 		entityManager.persist(application);
 	}
-	 public Application convertApplicationDTOforProcess(WtsAppTab application, int processId) {
+	 @SuppressWarnings({ "rawtypes", "unchecked" })
+	public Application convertApplicationDTOforProcess(WtsAppTab application, int processId) {
 		 Application appDTO=null;
 		 if(application!=null) {
 			 appDTO= new Application();
@@ -216,7 +217,7 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 	}
 	
 	public List<WtsNewEtaTab> getETAApplicationTxn(int processId,int appId, String trtDt) {
-		String hql = "from WtsNewEtaTab WHERE processId=? and eventDate= ? AND parent_id is NULL and applicationId=? and childId IS NULL";
+		String hql = "from WtsNewEtaTab WHERE processId=? and eventDate= ? AND applicationId=0 and parent_id=? and childId=0";
 
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processId);
@@ -244,7 +245,7 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 	}
 	
 	public List<WtsNewEtaTab> getETAProcessTxn(int processId, String trtDt) {
-		String hql = "from WtsNewEtaTab WHERE processId=? and eventDate= ? AND parent_id is NULL and applicationId=0 and childId IS NULL";
+		String hql = "from WtsNewEtaTab WHERE processId=? and eventDate= ? AND parent_id=0 and applicationId=0 and childId=0";
 
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processId);

@@ -528,7 +528,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 							newEnd = new Timestamp(newEndL);
 						}
 						childETA.setNewEtaEndTransaction(newEnd);
-						childETA.setNewEtaStartTransaction(oldstartTime);
+						childETA.setNewEtaStartTransaction(newStart);
 						childETA.setParentId(wtsAppMappingTab.getParentId());
 						childETA.setChildId(wtsAppMappingTab.getChildId());
 						childETA.setProcessId(processId);
@@ -589,6 +589,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				et.setNewEtaEndTransaction(newEnd);
 				et.setNewEtaStartTransaction(newStart);
 				et.setParentId(wtsProcessAppMapTab.getApplicationId());
+				//et.setApplicationId(wtsProcessAppMapTab.getApplicationId());
 				et.setProcessId(processId);
 				et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 				et.setProblemFlag(1);
@@ -1310,6 +1311,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					buf = nextApp.getBufferTime();
 					nextAppSeq = nextApp.getSequence();
 				}
+				//refresh for immediate child eta
 				if (nextAppSeq > currentSeq) {
 					WtsNewEtaTab et = getTdyETATxnByParentChildID(nextApp.getParentId(), nextApp.getChildId(),
 							nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
@@ -1443,9 +1445,11 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				}
 
 			}
+			
+			
 			// update process ETA
-			WtsNewEtaTab exist_proc_eta = getTdyETATxnByParentId(parentId, processId,
-					TreatmentDate.getInstance().getTreatmentDate());
+			WtsNewEtaTab exist_proc_eta =getTdyETATxnByProcessId(processId, TreatmentDate.getInstance().getTreatmentDate());
+					
 			if (exist_proc_eta == null) {
 				exist_proc_eta = new WtsNewEtaTab();
 			}
@@ -1467,9 +1471,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			}
 
 		}
-
+		prepareChildRefreshEta(processId,parentId,TreatmentDate.getInstance().getTreatmentDate());
 		entityManager.flush();
-		// System.out.println("new start time is "+fileStart);
 		System.out.println("refreshed ETA..");
 	}
 
@@ -1602,5 +1605,86 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		return (List<WtsNewEtaTab>) entityManager.createQuery(hql)
 				.setParameter(1, TreatmentDate.getInstance().getTreatmentDate()).getResultList();
 	}
-
+ 
+	public void prepareChildRefreshEta(int processId,int parentId,String treatDt){
+		//Parent siblings
+				List<WtsProcessAppMapTab> procHigherMapping=proAppMapDao.getAllHigherAppMappingsByProcess(processId, parentId);
+				if(procHigherMapping!=null && !procHigherMapping.isEmpty()) {
+					Iterator<WtsProcessAppMapTab> proItr=procHigherMapping.iterator();
+					while (proItr.hasNext()) {
+						boolean persist=false;
+						WtsProcessAppMapTab wtsProcessAppMapTab = (WtsProcessAppMapTab) proItr.next();
+						Timestamp actualstartTime = null;
+						Timestamp actualendDtTime = null;
+						Long origDiff = Long.valueOf(0);
+						if (wtsProcessAppMapTab != null) {
+							actualstartTime = wtsProcessAppMapTab.getStartTime();
+							actualendDtTime = wtsProcessAppMapTab.getEndTime();
+							origDiff = actualendDtTime.getTime() - actualstartTime.getTime();
+						}
+						
+						WtsNewEtaTab et = getTdyETATxnByParentId(wtsProcessAppMapTab.getApplicationId(), processId, TreatmentDate.getInstance().getTreatmentDate());
+						if (et == null) {
+							et = new WtsNewEtaTab();
+							persist=true;
+						}
+						
+						et.setNewEtaEndTransaction(actualendDtTime);
+						et.setNewEtaStartTransaction(actualstartTime);
+						et.setParentId(wtsProcessAppMapTab.getApplicationId());
+						et.setProcessId(processId);
+						et.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+						et.setProblemFlag(1);
+						this.forceInsertOrUpdateEta(et);
+						persist=false;
+						//update equivalent app ETA record..
+						WtsNewEtaTab topET = getTdyETATxnByProcessIdAppID(wtsProcessAppMapTab.getApplicationId(), processId,  TreatmentDate.getInstance().getTreatmentDate());
+						if (topET == null) {
+							topET = new WtsNewEtaTab();
+							persist=true;
+						}
+					
+						topET.setNewEtaEndTransaction(actualendDtTime);
+						topET.setNewEtaStartTransaction(actualstartTime);
+						topET.setApplicationId(wtsProcessAppMapTab.getApplicationId());
+						topET.setProcessId(processId);
+						topET.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+						topET.setProblemFlag(1);
+						this.forceInsertOrUpdateEta(topET);
+						
+						//fetch all childs of it and update
+						List<WtsAppMappingTab> siblingChildMappings=appMapDao.getAllAppMappingsByParent(wtsProcessAppMapTab.getApplicationId(), processId);
+						if(siblingChildMappings!=null && !siblingChildMappings.isEmpty()) {
+							Iterator<WtsAppMappingTab> sibItr=siblingChildMappings.iterator();
+							while (sibItr.hasNext()) {
+								WtsAppMappingTab wtsAppMappingTab = (WtsAppMappingTab) sibItr.next();
+								persist=false;
+								
+								if (wtsAppMappingTab != null) {
+									actualstartTime = wtsAppMappingTab.getStartTime();
+									actualendDtTime = wtsAppMappingTab.getEndTime();
+									origDiff = actualendDtTime.getTime() - actualstartTime.getTime();
+								}
+								
+								WtsNewEtaTab childETA = getTdyETATxnByParentChildID(wtsAppMappingTab.getParentId(),wtsAppMappingTab.getChildId(), processId, TreatmentDate.getInstance().getTreatmentDate());
+								if (childETA == null) {
+									childETA = new WtsNewEtaTab();
+									persist=true;
+								}
+								
+								childETA.setNewEtaEndTransaction(actualendDtTime);
+								childETA.setNewEtaStartTransaction(actualstartTime);
+								childETA.setParentId(wtsAppMappingTab.getParentId());
+								childETA.setChildId(wtsAppMappingTab.getChildId());
+								childETA.setProcessId(processId);
+								childETA.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
+								childETA.setProblemFlag(1);
+								this.forceInsertOrUpdateEta(childETA);
+							}
+						}
+						
+					}
+				}
+				
+	}
 }

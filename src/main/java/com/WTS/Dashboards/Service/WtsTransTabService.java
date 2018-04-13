@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.WTS.Dashboards.Controller.WtsTransTabController;
 import com.WTS.Dashboards.DTO.TransactionDTO;
 import com.WTS.Dashboards.Entity.WtsAppMappingTab;
 import com.WTS.Dashboards.Entity.WtsAppTab;
@@ -73,14 +74,17 @@ public class WtsTransTabService implements IWtsServiceInterface {
 						WtsTransTab newAppTrans = new WtsTransTab();
 						newAppTrans.setProcessId(processId);
 						newAppTrans.setApplicationId(app.getApplicationId());
+						
 						String appNam = app.getName();
 						WtsTransTab existingApp = this.getTransactionByAppIdProId(app.getApplicationId(), processId,
 								TreatmentDate.getInstance().getTreatmentDate());
 						if (existingApp != null) {
 							System.out.println("existing app TXn..");
+							
 							this.updateTransactionModifiedDetail(existingApp);
 							finalList.add(existingApp);
 						} else {
+							newAppTrans.setAppButtonStatus(WtsTransTabController.STATUS_YET_TO_START);
 							this.addTransaction(newAppTrans, appNam);
 							finalList.add(newAppTrans);
 						}
@@ -110,6 +114,7 @@ public class WtsTransTabService implements IWtsServiceInterface {
 						WtsTransTab newAppTrans = new WtsTransTab();
 						newAppTrans.setProcessId(processId);
 						newAppTrans.setApplicationId(app.getApplicationId());
+						newAppTrans.setAppButtonStatus(WtsTransTabController.STATUS_YET_TO_START);
 						finalList.add(newAppTrans);
 					}
 
