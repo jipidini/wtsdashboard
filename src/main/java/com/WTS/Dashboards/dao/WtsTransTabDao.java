@@ -632,10 +632,11 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 				if (FileCreationTime.getStartfileCreationTime(name) != null
 						&& (FileCreationTime.getEndfileCreationTime(name) != null)
 						&& (FileCreationTime.endTimestamp(name).before(endModDtTime))
-						&& etaExists)
+						&& etaExists) {
 					// UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS, if ETA finishes early
 					this.updateNewChildETA(transa.getProcessId(), existtrans.getParentId(), existtrans.getChildId(), true,mainpageNav);
 				etaCalculated=true;
+				}
 			}
 
 			System.out.println("getFileStatus function checked and status set");

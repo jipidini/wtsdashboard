@@ -259,6 +259,34 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			currentSeq = proMap.getSequence();
 		}
 
+		
+		// problem area doubt for parent ETA update-RED BLOCK
+				Timestamp startProcessTime = null;
+				Timestamp endProcessTime = null;
+				WtsNewEtaTab  oldETA=getTdyETATxnByParentChildID(parentId, childId,
+						processId, TreatmentDate.getInstance().getTreatmentDate());
+				if (!mainpageNav) {
+					WtsAppMappingTab parentMap = appMapDao.getAppMappingsByParent(parentId, childId, processId);
+					if (parentMap != null) {
+						startProcessTime = parentMap.getStartTime();
+						endProcessTime = parentMap.getEndTime();
+					}
+					
+					
+				} else {
+					WtsProcessAppMapTab parentMap = proAppMapDao.getAllAppMappingsByProcess(processId, parentId);
+					if (parentMap != null) {
+						startProcessTime = parentMap.getStartTime();
+						endProcessTime = parentMap.getEndTime();
+					}
+					
+					
+				}
+				
+				if(oldETA!=null) {
+					startDTTime = oldETA.getNewEtaStartTransaction();
+					endDTTime = oldETA.getNewEtaEndTransaction();
+				}
 		Long origDiff = Long.valueOf(0);
 		origDiff = endDTTime.getTime() - startDTTime.getTime();
 
@@ -277,22 +305,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			endDiff = (fileEnd.getTime() - endDTTime.getTime());
 		}
 
-		// problem area doubt for parent ETA update-RED BLOCK
-		Timestamp startProcessTime = null;
-		Timestamp endProcessTime = null;
-		if (!mainpageNav) {
-			WtsAppMappingTab parentMap = appMapDao.getAppMappingsByParent(parentId, childId, processId);
-			if (parentMap != null) {
-				startProcessTime = parentMap.getStartTime();
-				endProcessTime = parentMap.getEndTime();
-			}
-		} else {
-			WtsProcessAppMapTab parentMap = proAppMapDao.getAllAppMappingsByProcess(processId, parentId);
-			if (parentMap != null) {
-				startProcessTime = parentMap.getStartTime();
-				endProcessTime = parentMap.getEndTime();
-			}
-		}
+		
 		List<WtsAppMappingTab> apps = appMapDao.getAllAppMappingsByParent(parentId, processId);
 
 		// start Change case
@@ -325,19 +338,32 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			int nextAppSeq = 0;
 			Timestamp startApp = null;
 			Timestamp endDtTime = null;
+			Timestamp origstart = null;
+			Timestamp origend = null;
 			if (nextApp != null) {
 				startApp = nextApp.getStartTime();
 				endDtTime = nextApp.getEndTime();
+				origstart = nextApp.getStartTime();
+				origend = nextApp.getEndTime();
 				buf = nextApp.getBufferTime();
 				nextAppSeq = nextApp.getSequence();
 			}
-
+			
+			
+			
+			
 			if (nextAppSeq == currentSeq) {
 				WtsNewEtaTab curObj = getTdyETATxnByParentChildID(nextApp.getParentId(), nextApp.getChildId(),
 						nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
 				if (curObj == null) {
 					curObj = new WtsNewEtaTab();
 					persist=true;
+				}
+				WtsNewEtaTab  oldETA=getTdyETATxnByParentChildID(nextApp.getParentId(), nextApp.getChildId(),
+						nextApp.getProcessId(), TreatmentDate.getInstance().getTreatmentDate());
+				if(oldETA!=null) {
+					startApp = oldETA.getNewEtaStartTransaction();
+					endDtTime = oldETA.getNewEtaEndTransaction();
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
@@ -354,7 +380,16 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					newEnd = new Timestamp(newEndL);
 					endParentTime = new Timestamp(diff + endParentTime.getTime());
 				}
+				if(origstart.after(newStart))
+				{
+					newStart=origstart;
+				}
+				if(origend.after(newEnd))
+				{
+					newEnd=origend;
+				}
 				curObj.setNewEtaEndTransaction(newEnd);
+				
 				curObj.setNewEtaStartTransaction(newStart);
 				if(persist) {
 				curObj.setParentId(nextApp.getParentId());
@@ -390,10 +425,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				WtsAppMappingTab wtsAppMappingTab = (WtsAppMappingTab) chlItr.next();
 				Timestamp oldstartTime = null;
 				Timestamp oldendDtTime = null;
+				Timestamp origstart = null;
+				Timestamp origend = null;
 				Long origDiff = Long.valueOf(0);
 				if (wtsAppMappingTab != null) {
 					oldstartTime = wtsAppMappingTab.getStartTime();
 					oldendDtTime = wtsAppMappingTab.getEndTime();
+					origstart = wtsAppMappingTab.getStartTime();
+					origend = wtsAppMappingTab.getEndTime();
 					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 				}
 				
@@ -405,6 +444,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					oldstartTime = et.getNewEtaStartTransaction();
 					oldendDtTime = et.getNewEtaEndTransaction();
 					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
+				}
+				//early finish
+				if(diff<0) {
+					origDiff =diff;
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
@@ -418,6 +461,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					newStart = new Timestamp(newStartL);
 					Long newEndL = origDiff + oldendDtTime.getTime();
 					newEnd = new Timestamp(newEndL);
+				}
+				if(origstart.after(newStart))
+				{
+					newStart=origstart;
+				}
+				if(origend.after(newEnd))
+				{
+					newEnd=origend;
 				}
 				et.setNewEtaEndTransaction(newEnd);
 				et.setNewEtaStartTransaction(newStart);
@@ -443,10 +494,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				WtsProcessAppMapTab wtsProcessAppMapTab = (WtsProcessAppMapTab) proItr.next();
 				Timestamp oldstartTime = null;
 				Timestamp oldendDtTime = null;
+				Timestamp origstart = null;
+				Timestamp origend = null;
 				Long origDiff = Long.valueOf(0);
 				if (wtsProcessAppMapTab != null) {
 					oldstartTime = wtsProcessAppMapTab.getStartTime();
 					oldendDtTime = wtsProcessAppMapTab.getEndTime();
+					origstart = wtsProcessAppMapTab.getStartTime();
+					origend = wtsProcessAppMapTab.getEndTime();
 					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 				}
 				
@@ -458,6 +513,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					oldstartTime = et.getNewEtaStartTransaction();
 					oldendDtTime = et.getNewEtaEndTransaction();
 					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
+				}
+				//early finish
+				if(diff<0) {
+					origDiff =diff;
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
@@ -471,6 +530,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					newStart = new Timestamp(newStartL);
 					Long newEndL = origDiff + oldendDtTime.getTime();
 					newEnd = new Timestamp(newEndL);
+				}
+				if(origstart.after(newStart))
+				{
+					newStart=origstart;
+				}
+				if(origend.after(newEnd))
+				{
+					newEnd=origend;
 				}
 				et.setNewEtaEndTransaction(newEnd);
 				et.setNewEtaStartTransaction(newStart);
@@ -517,6 +584,8 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 						if (wtsAppMappingTab != null) {
 							oldstartTime = wtsAppMappingTab.getStartTime();
 							oldendDtTime = wtsAppMappingTab.getEndTime();
+							origstart = wtsAppMappingTab.getStartTime();
+							origend = wtsAppMappingTab.getEndTime();
 							origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 						}
 						
@@ -529,7 +598,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 							oldendDtTime = childETA.getNewEtaEndTransaction();
 							origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 						}
-						
+						//early finish
+						if(diff<0) {
+							origDiff =diff;
+						}
 						if (!endFlow) {
 							Long newStartL = diff +oldstartTime.getTime();
 							newStart = new Timestamp(newStartL);
@@ -541,6 +613,15 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 							Long newEndL = origDiff + oldendDtTime.getTime();
 							newEnd = new Timestamp(newEndL);
 						}
+						if(origstart.after(newStart))
+						{
+							newStart=origstart;
+						}
+						if(origend.after(newEnd))
+						{
+							newEnd=origend;
+						}
+						
 						childETA.setNewEtaEndTransaction(newEnd);
 						childETA.setNewEtaStartTransaction(newStart);
 						childETA.setParentId(wtsAppMappingTab.getParentId());
@@ -571,10 +652,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				WtsProcessAppMapTab wtsProcessAppMapTab = (WtsProcessAppMapTab) proItr.next();
 				Timestamp oldstartTime = null;
 				Timestamp oldendDtTime = null;
+				Timestamp origstart = null;
+				Timestamp origend = null;
 				Long origDiff = Long.valueOf(0);
 				if (wtsProcessAppMapTab != null) {
 					oldstartTime = wtsProcessAppMapTab.getStartTime();
 					oldendDtTime = wtsProcessAppMapTab.getEndTime();
+					origstart = wtsProcessAppMapTab.getStartTime();
+					origend = wtsProcessAppMapTab.getEndTime();
 					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 				}
 				
@@ -586,6 +671,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					oldstartTime = et.getNewEtaStartTransaction();
 					oldendDtTime = et.getNewEtaEndTransaction();
 					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
+				}
+				//early finish
+				if(diff<0) {
+					origDiff =diff;
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
@@ -603,6 +692,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					newStart = new Timestamp(newStartL);
 					Long newEndL = origDiff + oldendDtTime.getTime();
 					newEnd = new Timestamp(newEndL);
+				}
+				if(origstart.after(newStart))
+				{
+					newStart=origstart;
+				}
+				if(origend.after(newEnd))
+				{
+					newEnd=origend;
 				}
 				et.setNewEtaEndTransaction(newEnd);
 				et.setNewEtaStartTransaction(newStart);
@@ -652,12 +749,16 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		Timestamp newStart = null;
 		Timestamp oldstartTime = null;
 		Timestamp oldendDtTime = null;
+		Timestamp origstart = null;
+		Timestamp origend = null;
 		WtsProcessTab procObj=processDAO.getProcessById(processId);
 		Long origDiff = Long.valueOf(0);
 		
 		if (procObj != null) {
 			oldstartTime = procObj.getExpectedStartTime();
 			oldendDtTime = procObj.getExpectedEndTime();
+			origstart = procObj.getExpectedStartTime();
+			origend = procObj.getExpectedEndTime();
 			origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 		}
 		WtsNewEtaTab procET = getTdyETATxnByProcessId(processId,  TreatmentDate.getInstance().getTreatmentDate());
@@ -669,6 +770,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			oldendDtTime = procET.getNewEtaEndTransaction();
 			origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 		}
+		//early finish
+		if(diff<0) {
+			origDiff =diff;
+		}
 		if (!endFlow) {
 			Long newStartL = fileStartTime;
 			newStart = new Timestamp(newStartL);
@@ -679,6 +784,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			newStart = new Timestamp(newStartL);
 			Long newEndL = origDiff+oldendDtTime.getTime();
 			newEnd = new Timestamp(newEndL);
+		}
+		if(origstart.after(newStart))
+		{
+			newStart=origstart;
+		}
+		if(origend.after(newEnd))
+		{
+			newEnd=origend;
 		}
 		procET.setNewEtaEndTransaction(newEnd);
 		procET.setNewEtaStartTransaction(oldstartTime);
