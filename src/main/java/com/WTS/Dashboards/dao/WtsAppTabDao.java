@@ -245,7 +245,7 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 	}
 	
 	public List<WtsNewEtaTab> getETAProcessTxn(int processId, String trtDt) {
-		String hql = "from WtsNewEtaTab WHERE processId=? and eventDate= ? AND parent_id=0 and applicationId=0 and childId=0";
+		String hql = "from WtsNewEtaTab WHERE processId=? and eventDate= ? AND (parent_id=0 or parentId IS NULL) and applicationId=0 and (childId=0 or childId IS NULL)";
 
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processId);

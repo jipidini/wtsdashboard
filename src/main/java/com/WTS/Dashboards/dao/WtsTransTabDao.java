@@ -589,7 +589,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			 */
 			startModDTTime = DateUtility.addBufferTime(startDTTime, bufferTime);
 			System.out.println("Endtimefrom database" + endDtTime);
-
+			boolean etaExists=false;
 			endModDtTime = DateUtility.addBufferTime(endDtTime, bufferTime);
 			WtsNewEtaTab et = etDAO.getTdyETATxnByParentChildID(transa.getParentId(), transa.getChildId(),transa.getProcessId(),
 					TreatmentDate.getInstance().getTreatmentDate());
@@ -600,12 +600,16 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 				startModDTTime = DateUtility.addBufferTime(startDTTime, bufferTime);
 
 				endModDtTime = DateUtility.addBufferTime(endDtTime, bufferTime);
+				etaExists=true;
 			}
 			String name=appln.getName();
 			int status = getFileStatus(startModDTTime, endModDtTime, name);
 			boolean etaCalculated=false;
 			WtsTransTab existtrans = getTransactionByParentChildId( transa.getChildId(),transa.getParentId(),transa.getProcessId(),
 					TreatmentDate.getInstance().getTreatmentDate());
+			
+			
+			
 			if (existtrans != null && existtrans.getStatusId() == WtsTransTabController.STATUS_FAILURE
 					&& (status == WtsTransTabController.STATUS_IN_PROGRESS
 							|| status == WtsTransTabController.STATUS_DELAYED
@@ -621,6 +625,15 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 						&& (FileCreationTime.getEndfileCreationTime(name) != null)
 						&& (FileCreationTime.endTimestamp(name).after(endModDtTime)))
 					// UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
+					this.updateNewChildETA(transa.getProcessId(), existtrans.getParentId(), existtrans.getChildId(), true,mainpageNav);
+				etaCalculated=true;
+			}else if (existtrans != null && existtrans.getStatusId() == WtsTransTabController.STATUS_IN_PROGRESS
+					&& (status == WtsTransTabController.STATUS_SUCCESS)) {
+				if (FileCreationTime.getStartfileCreationTime(name) != null
+						&& (FileCreationTime.getEndfileCreationTime(name) != null)
+						&& (FileCreationTime.endTimestamp(name).before(endModDtTime))
+						&& etaExists)
+					// UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS, if ETA finishes early
 					this.updateNewChildETA(transa.getProcessId(), existtrans.getParentId(), existtrans.getChildId(), true,mainpageNav);
 				etaCalculated=true;
 			}
@@ -663,9 +676,9 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			
 			transa.setAppButtonStatus(getAppButtonStatusForChild(transa.getProcessId(), transa.getParentId(),transa.getChildId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
 						
-			if(!etaCalculated && etDAO.isETAExistsForParentChild(transa.getProcessId(),transa.getParentId(),transa.getChildId())) {
+		/*	if(!etaCalculated && etDAO.isETAExistsForParentChild(transa.getProcessId(),transa.getParentId(),transa.getChildId())) {
 				this.refreshChildETA(transa.getProcessId(), transa.getParentId(),transa.getChildId(), false,mainpageNav);
-			}
+			}*/
 //			Timestamp refstartTime=appMapDao.getAppMappingStartTime(transa.getProcessId(), transa.getParentId(),transa.getChildId());
 //			Timestamp refEndTime=appMapDao.getAppMappingEndTime(transa.getProcessId(), transa.getParentId(),transa.getChildId());
 //			

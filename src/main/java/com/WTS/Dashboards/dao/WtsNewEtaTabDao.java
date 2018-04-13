@@ -297,7 +297,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 
 		// start Change case
 		
-		if (endDiff > 0) {
+		if (endDiff != 0) {
 			this.updateDifferenceETA(endDiff, origDiff, apps, startProcessTime, endProcessTime,
 					fileStart.getTime(), parentId, processId, true,currentSeq);
 
@@ -356,8 +356,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				}
 				curObj.setNewEtaEndTransaction(newEnd);
 				curObj.setNewEtaStartTransaction(newStart);
+				if(persist) {
 				curObj.setParentId(nextApp.getParentId());
 				curObj.setChildId(nextApp.getChildId());
+				}
 				curObj.setProcessId(nextApp.getProcessId());
 				curObj.setEventDate(TreatmentDate.getInstance().getTreatmentDate());
 				curObj.setProblemFlag(1);
@@ -399,6 +401,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				if (et == null) {
 					et = new WtsNewEtaTab();
 					persist=true;
+				}else {
+					oldstartTime = et.getNewEtaStartTransaction();
+					oldendDtTime = et.getNewEtaEndTransaction();
+					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
@@ -448,6 +454,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				if (et == null) {
 					et = new WtsNewEtaTab();
 					persist=true;
+				}else {
+					oldstartTime = et.getNewEtaStartTransaction();
+					oldendDtTime = et.getNewEtaEndTransaction();
+					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
@@ -477,17 +487,17 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					persist=true;
 				}
 			
-				if (!endFlow) {
-					Long newStartL = diff +oldstartTime.getTime();
-					newStart = new Timestamp(newStartL);
-					Long newEndL = origDiff + newStartL;
-					newEnd = new Timestamp(newEndL);
-				} else {
-					Long newStartL = diff +oldstartTime.getTime();
-					newStart = new Timestamp(newStartL);
-					Long newEndL = origDiff + oldendDtTime.getTime();
-					newEnd = new Timestamp(newEndL);
-				}
+//				if (!endFlow) {
+//					Long newStartL = diff +oldstartTime.getTime();
+//					newStart = new Timestamp(newStartL);
+//					Long newEndL = origDiff + newStartL;
+//					newEnd = new Timestamp(newEndL);
+//				} else {
+//					Long newStartL = diff +oldstartTime.getTime();
+//					newStart = new Timestamp(newStartL);
+//					Long newEndL = origDiff + oldendDtTime.getTime();
+//					newEnd = new Timestamp(newEndL);
+//				}
 				topET.setNewEtaEndTransaction(newEnd);
 				topET.setNewEtaStartTransaction(newStart);
 				topET.setApplicationId(wtsProcessAppMapTab.getApplicationId());
@@ -514,6 +524,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 						if (childETA == null) {
 							childETA = new WtsNewEtaTab();
 							persist=true;
+						}else {
+							oldstartTime = childETA.getNewEtaStartTransaction();
+							oldendDtTime = childETA.getNewEtaEndTransaction();
+							origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 						}
 						
 						if (!endFlow) {
@@ -568,6 +582,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				if (et == null) {
 					et = new WtsNewEtaTab();
 					persist=true;
+				}else {
+					oldstartTime = et.getNewEtaStartTransaction();
+					oldendDtTime = et.getNewEtaEndTransaction();
+					origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
@@ -646,6 +664,10 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		if (procET == null) {
 			procET = new WtsNewEtaTab();
 			persist=true;
+		}else {
+			oldstartTime = procET.getNewEtaStartTransaction();
+			oldendDtTime = procET.getNewEtaEndTransaction();
+			origDiff = oldendDtTime.getTime() - oldstartTime.getTime();
 		}
 		if (!endFlow) {
 			Long newStartL = fileStartTime;
@@ -1477,7 +1499,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 	}
 
 	private WtsNewEtaTab getTdyETATxnByProcessId(int processId, String treatmentDate) {
-		String hql = "from WtsNewEtaTab WHERE processId=?  AND eventDate= ? and applicationId=0";
+		String hql = "from WtsNewEtaTab WHERE processId=?  AND eventDate= ? and applicationId=0 and (parentId=0  or parentId IS NULL)and (childId=0  or childId IS NULL)";
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processId);
 		qry.setParameter(2, treatmentDate);
