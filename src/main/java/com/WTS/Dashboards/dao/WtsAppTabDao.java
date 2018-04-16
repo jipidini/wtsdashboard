@@ -231,6 +231,7 @@ public class WtsAppTabDao implements IWtsDaoInterface{
 	}
 	
 	
+	
 	public List<WtsTransTab> getTdyProcessTxn(int processId, String trtDt) {
 		String hql = "from WtsTransTab WHERE processId=? and eventDate= ? AND parent_id is NULL and applicationId IS NULL and childId IS NULL";
 

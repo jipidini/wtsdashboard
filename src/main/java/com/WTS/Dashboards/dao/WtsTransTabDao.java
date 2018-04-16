@@ -442,6 +442,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	}
 
 	
+	
 	public Integer getAppButtonStatus(int processId, int appId, int txnstatus, Timestamp refstartTime, Timestamp refEndTime, Date startTransaction,
 			Date endTransaction) {
 		Timestamp current = currentTimestamp();
@@ -459,8 +460,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		else if(txnstatus==WtsTransTabController.STATUS_SUCCESS) {
 			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}
-		else
-			appstatus=WtsTransTabController.STATUS_YET_TO_START;
+		
 		return appstatus;
 	}
 
@@ -477,12 +477,11 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		}else if(txnstatus==WtsTransTabController.STATUS_SUCCESS) {
 			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}
-		else
-			appstatus=WtsTransTabController.STATUS_YET_TO_START;
+		
 		return appstatus;
 	}
 	public boolean isAllChildAppsGreen(int processId, int parentId, int childId) {
-		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and   parentId=?  and childId = ? and app.eventDate=? and statusId not in (0,1)";
+		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and   parentId=?  and childId = ? and app.eventDate=? and statusId not in (1)";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, parentId).setParameter(3, childId).setParameter(4, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? false : true;
 		}
@@ -493,24 +492,25 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		if(this.isAllProcessAppsNotStarted( processId,  parentId)) {
 			appstatus=WtsTransTabController.STATUS_YET_TO_START;
 		}else if(this.isAllProcessAppsGreen( processId,  parentId)) {
-			appstatus=WtsTransTabController.STATUS_PROC_LIGHTGREEN;
+			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}else if(this.isAnyProcessAppsRed( processId,  parentId)) {
 			appstatus=WtsTransTabController.STATUS_PROC_ORANGE;
 		}
 		else {
-			appstatus=WtsTransTabController.STATUS_SUCCESS;
+			
+			appstatus=WtsTransTabController.STATUS_PROC_LIGHTGREEN;
 		}
 		
 		return appstatus;
 	}
 	private boolean isAnyProcessAppsRed(int processId, int parentId) {
-		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.parentId = ? and app.eventDate=? and app.appButtonStatus  in (2,5)";
+		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.parentId = ? and app.eventDate=? and app.appButtonStatus  in (2)";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, processId).setParameter(3, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? true : false;
 	}
 
 	public boolean isAllProcessAppsGreen(int processId, int parentId) {
-		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.parentId=? and app.eventDate=? and app.appButtonStatus not in (0,1,5)";
+		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.parentId=? and app.eventDate=? and app.appButtonStatus not in (0,2,5)";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, parentId).setParameter(3, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? false : true;
 	}
@@ -541,7 +541,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 	}
 	
 	public boolean isAllChildAppsGreen(int processId,int applicationId){
-		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and (applicationId=? or  parentId=? ) and app.eventDate=? and statusId not in (0,1)";
+		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and (applicationId=? or  parentId=? ) and app.eventDate=? and statusId not in (1)";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, applicationId).setParameter(3, applicationId).setParameter(4, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? false : true;
 		}
@@ -552,17 +552,18 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		return cnt > 0 ? false : true;
 		}
 	public boolean isAllProcessAppsGreen(int processId){
-		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.eventDate=? and app.appButtonStatus not in (0,1,5)";
+		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.eventDate=? and app.appButtonStatus not in (0,2,5)";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? false : true;
 		}
 	
 	
 	public boolean isAnyProcessAppsRed(int processId){
-		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.eventDate=? and app.appButtonStatus  in (2,5)";
+		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.eventDate=? and app.appButtonStatus  in (2)";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? true : false;
 		}
+	
 	
 	public void updateChildTransactionModifiedDetail(WtsTransTab trans, boolean mainpageNav) throws Exception {
 		WtsTransTab transa = (WtsTransTab) trans;

@@ -42,7 +42,7 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 	
 	public List <WtsProcessAppMapTab> getAllLowerAppMappingsByProcess(int processId,int applicationId) {
 		int seq=this.getAppMappingSequence(processId, applicationId);
-		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc AND app.sequence <= "+seq;
+		   String hql="FROM WtsProcessAppMapTab as app WHERE app.processId=:proc AND app.sequence = "+seq;
 		   
 		 List <WtsProcessAppMapTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).getResultList();
 		  if(ls!=null && !ls.isEmpty())
