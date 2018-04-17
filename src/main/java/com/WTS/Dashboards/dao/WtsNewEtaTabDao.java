@@ -457,7 +457,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Long newEndL = origDiff + newStartL;
 					newEnd = new Timestamp(newEndL);
 				} else {
-					Long newStartL = diff +oldstartTime.getTime();
+					Long newStartL =oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
 					Long newEndL = diff + oldendDtTime.getTime();
 					newEnd = new Timestamp(newEndL);
@@ -526,9 +526,9 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					Long newEndL = origDiff + newStartL;
 					newEnd = new Timestamp(newEndL);
 				} else {
-					Long newStartL = diff +oldstartTime.getTime();
+					Long newStartL =oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
-					Long newEndL = origDiff +newStartL;
+					Long newEndL = diff + oldendDtTime.getTime();
 					newEnd = new Timestamp(newEndL);
 				}
 				if(origstart.after(newStart))
@@ -608,7 +608,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 							Long newEndL = origDiff + newStartL;
 							newEnd = new Timestamp(newEndL);
 						} else {
-							Long newStartL = diff +oldstartTime.getTime();
+							Long newStartL =oldstartTime.getTime();
 							newStart = new Timestamp(newStartL);
 							Long newEndL = diff + oldendDtTime.getTime();
 							newEnd = new Timestamp(newEndL);
@@ -679,18 +679,18 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
 				if (!endFlow) {
-					Long newStartL = origstart.getTime()+diff;
+					Long newStartL = oldstartTime.getTime()+diff;
 					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
 						newStartL = oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
-					Long newEndL = oldendDtTime.getTime()+diff;
+					Long newEndL = origDiff + newStartL;
 					newEnd = new Timestamp(newEndL);
 				} else {
-					Long newStartL = origstart.getTime()+diff;
+					Long newStartL = oldstartTime.getTime();
 					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
 						newStartL = oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
-					Long newEndL = oldendDtTime.getTime()+diff;
+					Long newEndL =diff+oldendDtTime.getTime();
 					newEnd = new Timestamp(newEndL);
 				}
 				if(origstart.after(newStart))
@@ -775,14 +775,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 			origDiff =diff;
 		}
 		if (!endFlow) {
-			Long newStartL = fileStartTime;
+			Long newStartL = oldstartTime.getTime()+diff;
 			newStart = new Timestamp(newStartL);
 			Long newEndL = origDiff+newStartL;
 			newEnd = new Timestamp(newEndL);
 		} else {
-			Long newStartL = fileStartTime;
+			Long newStartL = oldstartTime.getTime();
 			newStart = new Timestamp(newStartL);
-			Long newEndL = origDiff+oldendDtTime.getTime();
+			Long newEndL =diff+oldendDtTime.getTime();
 			newEnd = new Timestamp(newEndL);
 		}
 		if(origstart.after(newStart))

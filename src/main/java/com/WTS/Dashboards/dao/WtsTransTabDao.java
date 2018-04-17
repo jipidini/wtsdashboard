@@ -450,7 +450,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		if(this.isAllChildAppsGreen(processId, appId)) {
 			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && (startTransaction!=null)) {
-			appstatus=WtsTransTabController.STATUS_FAILURE;
+			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && (current.after(refEndTime))) {
 			appstatus=WtsTransTabController.STATUS_FAILURE;
 		}
@@ -470,11 +470,14 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		int appstatus=WtsTransTabController.STATUS_YET_TO_START;
 		if(this.isAllChildAppsGreen(processId,  parentId, childId)) {
 			appstatus=WtsTransTabController.STATUS_SUCCESS;
-		}else if(txnstatus==WtsTransTabController.STATUS_FAILURE) {
-			appstatus=WtsTransTabController.STATUS_APP_AMBER;
+		}else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && startTransaction!=null) {
+			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && current.after(refEndTime)) {
 			appstatus=WtsTransTabController.STATUS_FAILURE;
-		}else if(txnstatus==WtsTransTabController.STATUS_SUCCESS) {
+		}else if(txnstatus==WtsTransTabController.STATUS_FAILURE) {
+			appstatus=WtsTransTabController.STATUS_APP_AMBER;
+		}
+		else if(txnstatus==WtsTransTabController.STATUS_SUCCESS) {
 			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}
 		
@@ -493,12 +496,13 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			appstatus=WtsTransTabController.STATUS_YET_TO_START;
 		}else if(this.isAllProcessAppsGreen( processId,  parentId)) {
 			appstatus=WtsTransTabController.STATUS_SUCCESS;
+			appstatus=WtsTransTabController.STATUS_PROC_LIGHTGREEN;
 		}else if(this.isAnyProcessAppsRed( processId,  parentId)) {
 			appstatus=WtsTransTabController.STATUS_PROC_ORANGE;
 		}
 		else {
 			
-			appstatus=WtsTransTabController.STATUS_PROC_LIGHTGREEN;
+			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}
 		
 		return appstatus;
@@ -532,8 +536,10 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		    appstatus=WtsTransTabController.STATUS_FAILURE;
 		}else if(this.isAllProcessAppsGreen(processId)) {
 			appstatus=WtsTransTabController.STATUS_PROC_LIGHTGREEN;
+			
 		}	
 		else {
+			
 			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}
 		
@@ -619,6 +625,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 				// UPDATE ETA HERE FOR ALL NEXT APPS AND PROCESS
 				this.updateNewChildETA(transa.getProcessId(), existtrans.getParentId(), existtrans.getChildId(), true,mainpageNav);
 				etaCalculated=true;
+				existtrans.setAppButtonStatus(WtsTransTabController.STATUS_FAILURE);
 
 			} else if (existtrans != null && existtrans.getStatusId() == WtsTransTabController.STATUS_FAILURE
 					&& (status == WtsTransTabController.STATUS_SUCCESS)) {
