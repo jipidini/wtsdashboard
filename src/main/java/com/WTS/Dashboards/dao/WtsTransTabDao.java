@@ -470,7 +470,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		int appstatus=WtsTransTabController.STATUS_YET_TO_START;
 		if(this.isAllChildAppsGreen(processId,  parentId, childId)) {
 			appstatus=WtsTransTabController.STATUS_SUCCESS;
-		}else if(txnstatus==WtsTransTabController.STATUS_FAILURE && startTransaction==null) {
+		}else if(txnstatus==WtsTransTabController.STATUS_FAILURE) {
 			appstatus=WtsTransTabController.STATUS_APP_AMBER;
 		}else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && current.after(refEndTime)) {
 			appstatus=WtsTransTabController.STATUS_FAILURE;

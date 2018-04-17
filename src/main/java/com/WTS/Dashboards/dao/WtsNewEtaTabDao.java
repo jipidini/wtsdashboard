@@ -459,7 +459,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				} else {
 					Long newStartL = diff +oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
-					Long newEndL = origDiff + oldendDtTime.getTime();
+					Long newEndL = diff + oldendDtTime.getTime();
 					newEnd = new Timestamp(newEndL);
 				}
 				if(origstart.after(newStart))
@@ -528,7 +528,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				} else {
 					Long newStartL = diff +oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
-					Long newEndL = origDiff + oldendDtTime.getTime();
+					Long newEndL = origDiff +newStartL;
 					newEnd = new Timestamp(newEndL);
 				}
 				if(origstart.after(newStart))
@@ -610,7 +610,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 						} else {
 							Long newStartL = diff +oldstartTime.getTime();
 							newStart = new Timestamp(newStartL);
-							Long newEndL = origDiff + oldendDtTime.getTime();
+							Long newEndL = diff + oldendDtTime.getTime();
 							newEnd = new Timestamp(newEndL);
 						}
 						if(origstart.after(newStart))
@@ -679,18 +679,18 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
 				if (!endFlow) {
-					Long newStartL = fileStartTime;
+					Long newStartL = origstart.getTime()+diff;
 					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
 						newStartL = oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
-					Long newEndL = origDiff + newStartL;
+					Long newEndL = oldendDtTime.getTime()+diff;
 					newEnd = new Timestamp(newEndL);
 				} else {
-					Long newStartL = fileStartTime;
+					Long newStartL = origstart.getTime()+diff;
 					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
 						newStartL = oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
-					Long newEndL = origDiff + oldendDtTime.getTime();
+					Long newEndL = oldendDtTime.getTime()+diff;
 					newEnd = new Timestamp(newEndL);
 				}
 				if(origstart.after(newStart))
