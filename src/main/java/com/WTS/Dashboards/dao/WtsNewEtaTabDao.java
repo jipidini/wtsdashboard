@@ -517,6 +517,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				//early finish
 				if(diff<0) {
 					origDiff =diff;
+					//oldstartTime= et.getNewEtaStartTransaction()+diff
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
