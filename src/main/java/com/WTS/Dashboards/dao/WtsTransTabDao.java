@@ -138,6 +138,21 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			return null;
 
 	}
+	
+	
+	
+	public List<WtsTransTab> getAllTdyTxnByProcessId(int processId, String trtDt) {
+		String hql = "from WtsTransTab WHERE processId=? and eventDate= ?";
+
+		Query qry = entityManager.createQuery(hql);
+		qry.setParameter(1, processId);
+		qry.setParameter(2, trtDt);
+		if (qry.getResultList() != null && !qry.getResultList().isEmpty())
+			return qry.getResultList();
+		else
+			return null;
+
+	}
 
 	public WtsTransTab getTdyTxnByParentId(int parentId, int processId, String trtDt) {
 		String hql = "from WtsTransTab tab WHERE tab.parentId=? and tab.processId=? and eventDate= ?";
@@ -148,6 +163,20 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		qry.setParameter(3, trtDt);
 		if (qry.getResultList() != null && !qry.getResultList().isEmpty())
 			return (WtsTransTab) qry.getResultList().get(0);
+		else
+			return null;
+
+	}
+	
+	public List<WtsTransTab> getAllTdyTxnByParentId(int parentId, int processId, String trtDt) {
+		String hql = "from WtsTransTab tab WHERE tab.parentId=? and tab.processId=? and eventDate= ? and childId is not null";
+
+		Query qry = entityManager.createQuery(hql);
+		qry.setParameter(1, parentId);
+		qry.setParameter(2, processId);
+		qry.setParameter(3, trtDt);
+		if (qry.getResultList() != null && !qry.getResultList().isEmpty())
+			return qry.getResultList();
 		else
 			return null;
 
@@ -356,7 +385,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 						Timestamp refstartTime=appMapDao.getAppMappingStartTime(transa.getProcessId(), transa.getApplicationId());
 						Timestamp refEndTime=appMapDao.getAppMappingEndTime(transa.getProcessId(), transa.getApplicationId());
 						
-						transa.setAppButtonStatus(getAppButtonStatus(transa.getProcessId(), transa.getApplicationId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction(),transa.getSendemailflag()));
+						transa.setAppButtonStatus(getAppButtonStatus(transa.getProcessId(), transa.getApplicationId(),transa,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction(),transa.getSendemailflag()));
 						
 						
 			// PROCESS
@@ -433,8 +462,8 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			transa.setStatusId(status);
 			Timestamp refstartTime=processDAO.getProcessStartTime(transa.getProcessId());
 			Timestamp refEndTime=processDAO.getProcessEndTime(transa.getProcessId());
-			System.out.println("ProcessStatus------->"+getProcessButtonStatus(transa.getProcessId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
-			transa.setProcessStatus(getProcessButtonStatus(transa.getProcessId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
+//			System.out.println("ProcessStatus------->"+getProcessButtonStatus(transa.getProcessId(),transa,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
+			transa.setProcessStatus(getProcessButtonStatus(transa.getProcessId(),transa,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
 		}
 
 		entityManager.flush();
@@ -445,27 +474,58 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 
 	
 	
-	public Integer getAppButtonStatus(int processId, int appId, int txnstatus, Timestamp refstartTime, Timestamp refEndTime, Date startTransaction,
+	public Integer getAppButtonStatus(int processId, int appId, WtsTransTab transa, Timestamp refstartTime, Timestamp refEndTime, Date startTransaction,
 			Date endTransaction, int sendemailstatus) {
 		Timestamp current = currentTimestamp();
 		int appstatus=WtsTransTabController.STATUS_YET_TO_START;
-		if(this.isAllChildAppsGreen(processId, appId)) {
-			appstatus=WtsTransTabController.STATUS_SUCCESS;
-		}else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && (startTransaction!=null)) {
-			appstatus=WtsTransTabController.STATUS_SUCCESS;
-		}else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && (current.after(refEndTime))) {
-			appstatus=WtsTransTabController.STATUS_FAILURE;
+		boolean etaExists=false;
+		try {
+			WtsNewEtaTab procET = etDAO.getTdyETATxnByProcessId(processId,
+					TreatmentDate.getInstance().getTreatmentDate());
+			if (procET != null) {
+				etaExists = true;
+			}
+			
+		 if (transa != null && transa.getEndTransaction() != null
+					&& (transa.getEndTransaction().before(refEndTime))) {
+				return WtsTransTabController.STATUS_SUCCESS;
+			} else if (transa != null && transa.getStartTransaction() != null && transa.getEndTransaction() == null
+					&& !etaExists) {
+				return WtsTransTabController.STATUS_SUCCESS;
+			} else if (transa != null && transa.getStartTransaction() != null && transa.getEndTransaction() == null
+					&& etaExists) {
+
+				List<WtsTransTab> childTxns = getAllTdyTxnByParentId(transa.getProcessId(), transa.getParentId(),
+						TreatmentDate.getInstance().getTreatmentDate());
+
+				if (childTxns != null && !childTxns.isEmpty()) {
+					Iterator<WtsTransTab> childItr = childTxns.iterator();
+					while (childItr.hasNext()) {
+						WtsTransTab dbTxn = (WtsTransTab) childItr.next();
+						WtsAppMappingTab childMapping = appMapDao.getAppMappingsByParent(dbTxn.getParentId(),
+								dbTxn.getChildId(), dbTxn.getProcessId());
+						Timestamp origstartTime = null;
+						Timestamp origendDtTime = null;
+						int buffer = 0;
+						if (childMapping != null) {
+							origstartTime = childMapping.getStartTime();
+							origendDtTime = childMapping.getEndTime();
+							buffer = childMapping.getBufferTime();
+							if (dbTxn.getStartTransaction().after(DateUtility.addBufferTime(origstartTime, buffer)) || 
+									dbTxn.getEndTransaction().after(DateUtility.addBufferTime(origendDtTime, buffer)) ) {
+								return WtsTransTabController.STATUS_APP_AMBER;
+							}
+
+						}
+
+					}
+				}
+
+				return WtsTransTabController.STATUS_SUCCESS;
+			} 
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		else if(txnstatus==WtsTransTabController.STATUS_FAILURE) {
-			appstatus=WtsTransTabController.STATUS_APP_AMBER;
-		}
-		else if(txnstatus==WtsTransTabController.STATUS_SUCCESS) {
-			appstatus=WtsTransTabController.STATUS_SUCCESS;
-		}
-		else if(this.ApphasSendmailRedStatus(processId,appId,sendemailstatus)) {
-			appstatus=WtsTransTabController.STATUS_FAILURE;
-		}
-		
 		return appstatus;
 	}
 
@@ -485,7 +545,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		/*else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && current.after(refEndTime)) {
 			appstatus=WtsTransTabController.STATUS_FAILURE;
 		}*/else if(txnstatus==WtsTransTabController.STATUS_IN_PROGRESS && current.before(refEndTime)) {
-			appstatus=WtsTransTabController.STATUS_IN_PROGRESS;
+			appstatus=WtsTransTabController.STATUS_SUCCESS;
 		}
 		else if(txnstatus==WtsTransTabController.STATUS_FAILURE) {
 			appstatus=WtsTransTabController.STATUS_APP_AMBER;
@@ -508,9 +568,10 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, parentId).setParameter(3, childId).setParameter(4, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? true : false;
 		}
-	public Integer getProcessButtonStatusForChild(int processId, int parentId, int txnstatus, Timestamp refstartTime, Timestamp refEndTime, Date startTransaction,
+	/*public Integer getProcessButtonStatusForChild(int processId, int parentId, int txnstatus, Timestamp refstartTime, Timestamp refEndTime, Date startTransaction,
 			Date endTransaction) {
 		Timestamp current = currentTimestamp();
+		Date endtrans =this.processEndTime(processId);
 		int appstatus=WtsTransTabController.STATUS_YET_TO_START;
 		if(this.isAllProcessAppsNotStarted( processId,  parentId)) {
 			appstatus=WtsTransTabController.STATUS_YET_TO_START;
@@ -519,12 +580,12 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		}else if(this.isAnyProcessAppsRed( processId,  parentId)) {
 			appstatus=WtsTransTabController.STATUS_PROC_ORANGE;
 		}else if(endTransaction!=null){
-				if( (current.after(refEndTime))  && (endTransaction.after(refEndTime)))
+			if((new Timestamp(endTransaction.getTime()).after(refEndTime)))
 							appstatus=WtsTransTabController.STATUS_FAILURE;
 		}
 		
 		return appstatus;
-	}
+	}*/
 	public boolean isAllProcessGreen(int processId, int parentId) {
 		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.parentId=? and app.eventDate=? and app.appButtonStatus not in (1)";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, parentId).setParameter(3, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
@@ -547,41 +608,35 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, parentId).setParameter(3, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? false : true;
 		}
-	public Integer getProcessButtonStatus(int processId, int txnstatus, Timestamp refstartTime, Timestamp refEndTime, Date startTransaction,
+	public Integer getProcessButtonStatus(int processId, WtsTransTab transa, Timestamp refstartTime, Timestamp refEndTime, Date startTransaction,
 			Date endTransaction) {
-		Timestamp current = currentTimestamp();
-		Date endtrans =this.processEndTime(processId);
-		int appstatus=WtsTransTabController.STATUS_YET_TO_START;
-		
-		if(this.isAllProcessAppsNotStarted(processId)) {
-			appstatus=WtsTransTabController.STATUS_YET_TO_START;
-		}else if(this.isAllProcessAppsGreen(processId)) {
-			appstatus=WtsTransTabController.STATUS_PROC_LIGHTGREEN;
-			
-		}else if(this.isAnyProcessAppsRed(processId)) {
-			appstatus=WtsTransTabController.STATUS_PROC_ORANGE;
-			
+			boolean etaExists=false;
+		WtsNewEtaTab procET = etDAO.getTdyETATxnByProcessId(processId,  TreatmentDate.getInstance().getTreatmentDate());
+		if (procET != null) {
+			etaExists=true;
 		}
-		else if(endTransaction!=null){
-			if((new Timestamp(endTransaction.getTime()).after(refEndTime)))
-						appstatus=WtsTransTabController.STATUS_FAILURE;
-		}
+	
+			if(transa!=null && transa.getEndTransaction()!=null && (transa.getEndTransaction().after(refEndTime))){
+				
+				return WtsTransTabController.STATUS_FAILURE;
+			}else if(transa!=null && transa.getEndTransaction()!=null && (transa.getEndTransaction().before(refEndTime))){
+				return WtsTransTabController.STATUS_SUCCESS;
+			}else if(transa!=null && transa.getStartTransaction()!=null && transa.getEndTransaction()==null && !etaExists){
+				return WtsTransTabController.STATUS_PROC_LIGHTGREEN;
+			}
+			else if(transa!=null && transa.getStartTransaction()!=null && transa.getEndTransaction()==null && etaExists ){
+				if(this.isAnyParentAppsAmber(transa.getProcessId()))
+					return WtsTransTabController.STATUS_PROC_ORANGE;
+				else
+					return WtsTransTabController.STATUS_PROC_LIGHTGREEN;
+			}
 		
-		else if(this.isAnyProcessAppsRed(processId)&& (current.after(refEndTime)))
-		{
-		    appstatus=WtsTransTabController.STATUS_FAILURE;
-		}	
 		
-	 if(this.isAllProcessGreen(processId)) {
-			
-			appstatus=WtsTransTabController.STATUS_SUCCESS;
-		}
-		
-		return appstatus;
+		return WtsTransTabController.STATUS_YET_TO_START;
 	}
 	
 	private Date processEndTime(int processId) {
-		String hql="select endTransaction from WtsTransTab as tran where tran.processId=? and eventDate=? and parentId is NULL and childId is NULL";
+		String hql="select endTransaction from WtsTransTab as tran where tran.processId=? and eventDate=? and parentId is NULL and childId is NULL and applicationId is NULL";
 		Date endTime=(Date) entityManager.createQuery(hql).setParameter(1,processId).setParameter(2,TreatmentDate.getInstance().getTreatmentDate()).getSingleResult();
 	   return endTime;
 	}
@@ -590,6 +645,12 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and (applicationId=? or  parentId=? ) and app.eventDate=? and statusId not in (1)";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, applicationId).setParameter(3, applicationId).setParameter(4, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? false : true;
+		}
+	
+	public boolean isAnyParentAppsAmber(int processId){
+		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.eventDate=? and statusId = 5 and childId is NULL and (applicationId is not null)";
+		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
+		return cnt > 0 ? true : false;
 		}
 	
 	public boolean isAllProcessGreen(int processId){
@@ -603,14 +664,14 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		return cnt > 0 ? false : true;
 		}
 	public boolean isAllProcessAppsGreen(int processId){
-		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.eventDate=? and app.appButtonStatus not in (0,2,5)";
+		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.eventDate=? and app.appButtonStatus not in (0,2,5) and childId>0";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? true : false;
 		}
 	
 	
 	public boolean isAnyProcessAppsRed(int processId){
-		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.eventDate=? and app.appButtonStatus  in (2)";
+		String hql= "FROM WtsTransTab as app WHERE app.processId = ? and app.eventDate=? and app.appButtonStatus  in (2) ";
 		int cnt = entityManager.createQuery(hql).setParameter(1, processId).setParameter(2, TreatmentDate.getInstance().getTreatmentDate()).getResultList().size();
 		return cnt > 0 ? true : false;
 		}
@@ -728,7 +789,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			Timestamp refstartTime=appMapDao.getAppMappingStartTime(transa.getProcessId(), transa.getParentId(),transa.getChildId());
 			Timestamp refEndTime=appMapDao.getAppMappingEndTime(transa.getProcessId(), transa.getParentId(),transa.getChildId());
 			
-			transa.setAppButtonStatus(getAppButtonStatusForChild(transa.getProcessId(), transa.getParentId(),transa.getChildId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction(),transa.getSendemailflag()));
+			transa.setAppButtonStatus(getAppButtonStatusForChild(transa.getProcessId(), transa.getParentId(),transa.getChildId(),transa.getStatusId(),refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction(),transa.getSendemailflag()));
 						
 		/*	if(!etaCalculated && etDAO.isETAExistsForParentChild(transa.getProcessId(),transa.getParentId(),transa.getChildId())) {
 				this.refreshChildETA(transa.getProcessId(), transa.getParentId(),transa.getChildId(), false,mainpageNav);
@@ -739,7 +800,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 //			transa.setAppButtonStatus(getAppButtonStatusForChild(transa.getProcessId(), transa.getParentId(),transa.getChildId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
 //			
 			// Parent
-		} else if (transa.getChildId() == 0  && transa.getApplicationId()==0) {
+		} else if (transa.getChildId() == 0  && transa.getApplicationId()==0 && transa.getParentId()!=0) {
 			Date startTxnTime = null;
 			Date EndTxnTime = null;
 			int startAppID = 0;
@@ -820,7 +881,7 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 			//read times-app mapping tabke's parent id
 			Timestamp refstartTime=appMapDao.getAppMappingStartTime(transa.getProcessId(), transa.getParentId());
 			Timestamp refEndTime=appMapDao.getAppMappingEndTime(transa.getProcessId(), transa.getParentId());
-			transa.setProcessStatus(getProcessButtonStatusForChild(transa.getProcessId(), transa.getParentId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
+			//transa.setProcessStatus(getProcessButtonStatusForChild(transa.getProcessId(), transa.getParentId(),status,refstartTime,refEndTime,transa.getStartTransaction(),transa.getEndTransaction()));
 			
 		}
 

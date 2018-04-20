@@ -456,7 +456,14 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					newStart = new Timestamp(newStartL);
 					Long newEndL = origDiff + newStartL;
 					newEnd = new Timestamp(newEndL);
-				} else {
+				} else if (!endFlow && diff<0){
+					Long newStartL =oldstartTime.getTime() + diff;
+					newStart = new Timestamp(newStartL);
+					Long newEndL = diff + oldendDtTime.getTime();
+					newEnd = new Timestamp(newEndL);
+				}
+				
+				else {
 					Long newStartL =oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
 					Long newEndL = diff + oldendDtTime.getTime();
@@ -528,6 +535,9 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 					newEnd = new Timestamp(newEndL);
 				} else {
 					Long newStartL =oldstartTime.getTime();
+					if(diff<0){
+						newStartL =oldstartTime.getTime()+diff;
+					}
 					newStart = new Timestamp(newStartL);
 					Long newEndL = diff + oldendDtTime.getTime();
 					newEnd = new Timestamp(newEndL);
@@ -610,6 +620,9 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 							newEnd = new Timestamp(newEndL);
 						} else {
 							Long newStartL =oldstartTime.getTime();
+							if(diff<0){
+								newStartL =oldstartTime.getTime()+diff;
+							}
 							newStart = new Timestamp(newStartL);
 							Long newEndL = diff + oldendDtTime.getTime();
 							newEnd = new Timestamp(newEndL);
@@ -679,15 +692,22 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 				}
 				Timestamp newEnd = null;
 				Timestamp newStart = null;
+				Long newStartL = null;
 				if (!endFlow) {
-					Long newStartL = oldstartTime.getTime()+diff;
+					if(currentSeq==1){
+						 newStartL = oldstartTime.getTime()+diff;
+					}
+					else{
+						 newStartL=oldstartTime.getTime();
+					}
+					
 					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
 						newStartL = oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
 					Long newEndL = origDiff + newStartL;
 					newEnd = new Timestamp(newEndL);
 				} else {
-					Long newStartL = oldstartTime.getTime();
+					 newStartL = oldstartTime.getTime();
 					if(wtsProcessAppMapTab.getApplicationId()!=parentId)
 						newStartL = oldstartTime.getTime();
 					newStart = new Timestamp(newStartL);
@@ -1612,7 +1632,7 @@ public class WtsNewEtaTabDao implements IWtsDaoInterface {
 		System.out.println("refreshed ETA..");
 	}
 
-	private WtsNewEtaTab getTdyETATxnByProcessId(int processId, String treatmentDate) {
+	public WtsNewEtaTab getTdyETATxnByProcessId(int processId, String treatmentDate) {
 		String hql = "from WtsNewEtaTab WHERE processId=?  AND eventDate= ? and applicationId=0 and (parentId=0  or parentId IS NULL)and (childId=0  or childId IS NULL)";
 		Query qry = entityManager.createQuery(hql);
 		qry.setParameter(1, processId);

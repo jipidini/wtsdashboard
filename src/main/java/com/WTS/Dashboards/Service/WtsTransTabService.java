@@ -149,6 +149,11 @@ public class WtsTransTabService implements IWtsServiceInterface {
 
 			dtoObj.setStartTransaction(dbObj.getStartTransaction());
 			dtoObj.setEndTransaction(dbObj.getEndTransaction());
+			if(dbObj.getChildId()==0 && dbObj.getApplicationId()==0){
+				WtsTransTab txn= tranDao.getTdyTxnByProcessIdAppId(dbObj.getProcessId(), TreatmentDate.getInstance().getTreatmentDate(), dbObj.getParentId());
+				if(txn!=null)
+				dtoObj.setStatusId(txn.getStatusId());
+			}else
 			dtoObj.setStatusId(dbObj.getStatusId());
 			dtoObj.setSendemailflag(dbObj.getSendemailflag());
 			dtoObj.setSendetaemailflag(dbObj.getSendetaemailflag());

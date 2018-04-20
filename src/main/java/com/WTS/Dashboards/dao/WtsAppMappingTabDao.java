@@ -65,6 +65,17 @@ import com.WTS.Dashboards.Entity.WtsProcessAppMapTab;
 	   return null;
 	}
 	
+	
+	public int getAppMappingBuffer(int processId,int parentId,int childId) {
+		   String hql="FROM WtsAppMappingTab as app WHERE app.processId=:proc AND app.parentId=:app and app.childId=:child";
+		   
+		 List <WtsAppMappingTab> ls=entityManager.createQuery(hql).setParameter("proc",processId).setParameter("app", parentId).setParameter("child", childId).getResultList();
+		  if(ls!=null && !ls.isEmpty() && ls.get(0)!=null)
+			  return ls.get(0).getBufferTime();
+		  else
+	   return 0;
+	}
+	
 	public Timestamp getAppMappingStartTime(int processId,int parentId,int childId) {
 		   String hql="FROM WtsAppMappingTab as app WHERE app.processId=:proc AND app.parentId=:app and app.childId=:child";
 		   
