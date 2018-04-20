@@ -480,22 +480,22 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 		int appstatus=WtsTransTabController.STATUS_YET_TO_START;
 		boolean etaExists=false;
 		try {
-			WtsNewEtaTab procET = etDAO.getTdyETATxnByProcessId(processId,
-					TreatmentDate.getInstance().getTreatmentDate());
+			WtsNewEtaTab procET = etDAO.getTdyETATxnByProcessIdAppID(appId, processId, TreatmentDate.getInstance().getTreatmentDate());
 			if (procET != null) {
 				etaExists = true;
 			}
 			
-		 if (transa != null && transa.getEndTransaction() != null
-					&& (transa.getEndTransaction().before(refEndTime))) {
+			WtsTransTab parenttxn= this.getTdyTxnByParentId(appId, processId, TreatmentDate.getInstance().getTreatmentDate());
+			
+		 if (parenttxn != null && parenttxn.getEndTransaction() != null
+					&& (parenttxn.getEndTransaction().before(refEndTime))) {
 				return WtsTransTabController.STATUS_SUCCESS;
-			} else if (transa != null && transa.getStartTransaction() != null && transa.getEndTransaction() == null
+			} else if (parenttxn != null && parenttxn.getStartTransaction() != null && parenttxn.getEndTransaction() == null
 					&& !etaExists) {
 				return WtsTransTabController.STATUS_SUCCESS;
-			} else if (transa != null && transa.getStartTransaction() != null && transa.getEndTransaction() == null
-					&& etaExists) {
+			} else if (parenttxn != null && parenttxn.getStartTransaction() != null && parenttxn.getEndTransaction() == null) {
 
-				List<WtsTransTab> childTxns = getAllTdyTxnByParentId(transa.getProcessId(), transa.getParentId(),
+				List<WtsTransTab> childTxns = getAllTdyTxnByParentId(parenttxn.getProcessId(), parenttxn.getParentId(),
 						TreatmentDate.getInstance().getTreatmentDate());
 
 				if (childTxns != null && !childTxns.isEmpty()) {
@@ -511,9 +511,14 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 							origstartTime = childMapping.getStartTime();
 							origendDtTime = childMapping.getEndTime();
 							buffer = childMapping.getBufferTime();
-							if (dbTxn.getStartTransaction().after(DateUtility.addBufferTime(origstartTime, buffer)) || 
-									dbTxn.getEndTransaction().after(DateUtility.addBufferTime(origendDtTime, buffer)) ) {
-								return WtsTransTabController.STATUS_APP_AMBER;
+							if (dbTxn.getEndTransaction()!=null && dbTxn.getEndTransaction().before(DateUtility.addBufferTime(origendDtTime, buffer)) ) {
+								appstatus= WtsTransTabController.STATUS_SUCCESS;
+							}else
+							if ((dbTxn.getStatusId()==  WtsTransTabController.STATUS_FAILURE) 
+									|| (dbTxn.getEndTransaction()!=null && dbTxn.getEndTransaction().after(DateUtility.addBufferTime(origendDtTime, buffer)) 
+									|| (dbTxn.getStartTransaction()!=null && dbTxn.getStartTransaction().after(DateUtility.addBufferTime(origstartTime, buffer))) 
+									)) {
+								appstatus= WtsTransTabController.STATUS_APP_AMBER;
 							}
 
 						}
@@ -521,8 +526,10 @@ public class WtsTransTabDao implements IWtsDaoInterface {
 					}
 				}
 
-				return WtsTransTabController.STATUS_SUCCESS;
-			} 
+				appstatus= WtsTransTabController.STATUS_SUCCESS;
+			} else if (parenttxn != null && parenttxn.getStartTransaction() == null && parenttxn.getStatusId()== WtsTransTabController.STATUS_FAILURE) {
+				return WtsTransTabController.STATUS_APP_AMBER;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
